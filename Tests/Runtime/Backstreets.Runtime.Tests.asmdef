@@ -1,0 +1,11 @@
+{
+  "name": "Backstreets.Runtime.Tests",
+  "rootNamespace": "Backstreets.Tests",
+  "includePlatforms": ["Editor"],
+  "overrideReferences": true,
+  "precompiledReferences": [
+    "nunit.framework.dll"
+  ],
+  "autoReferenced": false,
+  "references":[ "Backstreets" ]
+}
