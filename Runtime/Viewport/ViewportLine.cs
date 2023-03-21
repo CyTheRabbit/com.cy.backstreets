@@ -1,7 +1,7 @@
 using System;
 using UnityEngine;
 
-namespace Backstreets
+namespace Backstreets.Viewport
 {
     internal struct ViewportLine : IComparable<ViewportLine>
     {

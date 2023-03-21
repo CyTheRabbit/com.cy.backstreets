@@ -1,3 +1,5 @@
+using Backstreets.Viewport;
+
 namespace Backstreets.Tests
 {
     internal static class A

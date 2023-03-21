@@ -4,7 +4,7 @@ using Backstreets.Data;
 using UnityEngine;
 using UnityEngine.Tilemaps;
 
-namespace DefaultNamespace
+namespace Backstreets.Pocket
 {
     public class PocketPrefabDetails : MonoBehaviour
     {

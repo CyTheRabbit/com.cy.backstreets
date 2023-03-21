@@ -1,7 +1,6 @@
-using Backstreets.Viewport;
 using UnityEngine;
 
-namespace Backstreets
+namespace Backstreets.Viewport
 {
     internal readonly struct ViewportSpace
     {
