@@ -2,13 +2,14 @@ using Unity.Burst;
 using Unity.Collections;
 using Unity.Jobs;
 using UnityEngine;
+using static Backstreets.FieldOfView.LineMath;
 
-namespace Backstreets.Viewport.Jobs
+namespace Backstreets.FieldOfView.Jobs
 {
     [BurstCompile]
     internal struct BuildViewportSegmentsJob : IJob
     {
-        public BuildViewportSegmentsJob(LineOfSight lineOfSight, NativeArray<Corner> corners, NativeList<ViewportSegment> segments)
+        public BuildViewportSegmentsJob(LineOfSight lineOfSight, NativeArray<Corner> corners, NativeList<Line> segments)
         {
             this.lineOfSight = lineOfSight;
             this.corners = corners;
@@ -17,7 +18,7 @@ namespace Backstreets.Viewport.Jobs
 
         private LineOfSight lineOfSight;
         [ReadOnly] private readonly NativeArray<Corner> corners;
-        [WriteOnly] private readonly NativeList<ViewportSegment> segments;
+        [WriteOnly] private readonly NativeList<Line> segments;
 
         public void Execute()
         {
@@ -47,19 +48,19 @@ namespace Backstreets.Viewport.Jobs
 
         private LineOfSight.UpdateReport UpdateLineOfSight(Vector2 vertex, Vector2 companion)
         {
-            Corner.RelativeDirection lineDirection = Corner.GetRelativeDirection(vertex, companion);
-            bool lineInvisible = lineDirection is Corner.RelativeDirection.Straight;
+            RayDomain lineDirection = GetDomain(vertex, companion);
+            bool lineInvisible = lineDirection is RayDomain.Straight;
             if (lineInvisible) return default;
 
-            bool lineStarts = lineDirection is Corner.RelativeDirection.Right;
+            bool lineStarts = lineDirection is RayDomain.Right;
             if (lineStarts)
             {
-                LineOfSight.Obstacle obstacle = new() { Left = vertex, Right = companion };
+                Line obstacle = new() { Left = vertex, Right = companion };
                 return lineOfSight.AddObstacle(obstacle);
             }
             else
             {
-                LineOfSight.Obstacle obstacle = new() { Left = companion, Right = vertex };
+                Line obstacle = new() { Left = companion, Right = vertex };
                 return lineOfSight.RemoveObstacle(obstacle);
             }
         }
@@ -67,10 +68,10 @@ namespace Backstreets.Viewport.Jobs
 
         private ref struct SegmentBuilder
         {
-            private NativeList<ViewportSegment> output;
+            private NativeList<Line> output;
             private Vector2 left;
 
-            public SegmentBuilder(NativeList<ViewportSegment> output)
+            public SegmentBuilder(NativeList<Line> output)
             {
                 this.output = output;
                 left = Vector2.zero;
@@ -83,7 +84,7 @@ namespace Backstreets.Viewport.Jobs
 
             internal void EndSegment(Vector2 end)
             {
-                ViewportSegment segment = new() { Left = left, Right = end };
+                Line segment = new() { Left = left, Right = end };
                 output.Add(segment);
             }
         }

@@ -1,7 +1,6 @@
 using System;
 using System.Linq;
-using Backstreets.Viewport;
-using Backstreets.Viewport.Jobs;
+using Backstreets.FieldOfView.Jobs;
 using Unity.Collections;
 using Unity.Jobs;
 using Unity.Mathematics;
@@ -9,7 +8,7 @@ using UnityEditor;
 using UnityEngine;
 using UnityEngine.Rendering;
 
-namespace Backstreets
+namespace Backstreets.FieldOfView.Sandbox
 {
     public class ViewportObserver : MonoBehaviour
     {
@@ -27,13 +26,13 @@ namespace Backstreets
         private void RebuildFieldOfViewMesh()
         {
             Transform transformCached = transform;
-            ViewportSpace space = new(
+            FieldOfViewSpace space = new(
                 worldToViewport: transformCached.worldToLocalMatrix,
                 viewportToWorld: transformCached.localToWorldMatrix);
 
             int totalVertexCount = obstacles.Sum(obstacle => obstacle.Vertices.Length);
             NativeArray<Corner> corners = new(totalVertexCount, Allocator.TempJob);
-            NativeList<ViewportSegment> viewportSegments = new(totalVertexCount + 1, Allocator.TempJob);
+            NativeList<Line> viewportSegments = new(totalVertexCount + 1, Allocator.TempJob);
             NativeList<Vector3> outputVertices = new(totalVertexCount * 2 + 1, Allocator.TempJob);
             NativeList<int> outputIndices = new(totalVertexCount * 3, Allocator.TempJob);
 
@@ -54,7 +53,7 @@ namespace Backstreets
             outputIndices.Dispose();
         }
 
-        private JobHandle ScheduleDataAssembly(in NativeArray<Corner> corners, ViewportSpace space)
+        private JobHandle ScheduleDataAssembly(in NativeArray<Corner> corners, FieldOfViewSpace space)
         {
             int totalVertexCount = obstacles.Sum(obstacle => obstacle.Vertices.Length);
             NativeArray<Vector2> source = new(totalVertexCount, Allocator.TempJob);
@@ -83,7 +82,7 @@ namespace Backstreets
 
         private static JobHandle ScheduleFieldOfViewCalculation(
             in NativeArray<Corner> corners,
-            in NativeList<ViewportSegment> fieldOfView,
+            in NativeList<Line> fieldOfView,
             JobHandle inputDependency)
         {
             NativeArray<Corner> orderedCorners = new(corners.Length, Allocator.TempJob);
@@ -106,8 +105,8 @@ namespace Backstreets
         }
 
         private static JobHandle ScheduleMeshGeneration(
-            ViewportSpace space,
-            in NativeList<ViewportSegment> segments,
+            FieldOfViewSpace space,
+            in NativeList<Line> segments,
             in NativeList<Vector3> outputVertices,
             in NativeList<int> outputIndices,
             JobHandle inputDependency)

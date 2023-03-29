@@ -3,8 +3,9 @@ using Unity.Burst;
 using Unity.Collections;
 using Unity.Jobs;
 using UnityEngine;
+using static Backstreets.FieldOfView.LineMath;
 
-namespace Backstreets.Viewport.Jobs
+namespace Backstreets.FieldOfView.Jobs
 {
     [BurstCompile]
     internal struct RaycastLinesJob : IJob
@@ -24,30 +25,29 @@ namespace Backstreets.Viewport.Jobs
         {
             foreach (Corner corner in corners)
             {
-                (Vector2 left, Vector2 right) = Align(corner.Position, corner.Right);
-                if (IsHit(left, right))
+                Line obstacle = Align(corner.Position, corner.Right);
+                if (IsHit(obstacle))
                 {
-                    LineOfSight.Obstacle obstacle = new() { Left = left, Right = right };
                     hits.AddObstacle(obstacle);
                 }
             }
         }
 
-        private bool IsHit(Vector2 left, Vector2 right)
+        private bool IsHit(Line obstacle)
         {
-            float leftAngle = Vector2.SignedAngle(ray, left);
-            float rightAngle = Vector2.SignedAngle(ray, right);
+            float leftAngle = Vector2.SignedAngle(ray, obstacle.Left);
+            float rightAngle = Vector2.SignedAngle(ray, obstacle.Right);
             return Math.Sign(leftAngle) != Math.Sign(rightAngle)
                    && rightAngle != 0 // Line ends at ray
                    && Math.Abs(rightAngle - leftAngle) < 180;
         }
 
-        private static (Vector2 left, Vector2 right) Align(Vector2 x, Vector2 y) =>
-            Corner.GetRelativeDirection(x, y) switch
+        private static Line Align(Vector2 x, Vector2 y) =>
+            GetDomain(x, y) switch
             {
-                Corner.RelativeDirection.Straight => (x, y),
-                Corner.RelativeDirection.Left => (y, x),
-                Corner.RelativeDirection.Right => (x, y),
+                RayDomain.Straight => new Line(x, y),
+                RayDomain.Left => new Line(y, x),
+                RayDomain.Right => new Line(x, y),
                 _ => throw new ArgumentOutOfRangeException()
             };
     }

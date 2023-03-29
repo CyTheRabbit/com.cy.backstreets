@@ -2,7 +2,7 @@ using Unity.Burst;
 using Unity.Collections;
 using Unity.Jobs;
 
-namespace Backstreets
+namespace Backstreets.FieldOfView.Jobs
 {
     [BurstCompile]
     internal readonly struct CopyArrayJob<T> : IJob

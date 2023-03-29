@@ -1,4 +1,4 @@
-using Backstreets.Viewport;
+using Backstreets.FieldOfView;
 using NUnit.Framework;
 using UnityEngine;
 
@@ -7,14 +7,14 @@ namespace Backstreets.Tests
     internal class IntersectionMathTests
     {
         [TestCaseSource(nameof(IntersectionTestcases))]
-        public void TestIntersections((ViewportLine a, ViewportLine b, Vector2? result) testcase)
+        public void TestIntersections((Line a, Line b, Vector2? result) testcase)
         {
-            Vector2? result = ViewportMath.GetIntersection(testcase.a.Left, testcase.a.Right, testcase.b.Left, testcase.b.Right);
+            Vector2? result = LineMath.GetIntersection(testcase.a, testcase.b);
             
             Assert.That(result, Is.EqualTo(testcase.result));
         }
 
-        private static readonly (ViewportLine a, ViewportLine b, Vector2? result)[] IntersectionTestcases =
+        private static readonly (Line a, Line b, Vector2? result)[] IntersectionTestcases =
         {
             (
                 a: A.Line(A.Point(0, 0), A.Point(1, 2)),
@@ -24,14 +24,14 @@ namespace Backstreets.Tests
         };
 
         [TestCaseSource(nameof(ProjectionTestcases))]
-        public void TestProjectionFromOrigin((ViewportLine line, Vector2 direction, Vector2? result) testcase)
+        public void TestProjectionFromOrigin((Line line, Vector2 direction, Vector2? result) testcase)
         {
-            Vector2? result = ViewportMath.ProjectFromOrigin(testcase.line.Left, testcase.line.Right, testcase.direction);
+            Vector2? result = LineMath.ProjectFromOrigin(testcase.line, testcase.direction);
             
             Assert.That(result, Is.EqualTo(testcase.result));
         }
 
-        private static readonly (ViewportLine line, Vector2 direction, Vector2? result)[] ProjectionTestcases =
+        private static readonly (Line line, Vector2 direction, Vector2? result)[] ProjectionTestcases =
         {
             (
                 line: A.Line(A.Point(-1, 5), A.Point(10, 5)),

@@ -3,14 +3,14 @@ using Unity.Collections;
 using Unity.Jobs;
 using UnityEngine;
 
-namespace Backstreets.Viewport.Jobs
+namespace Backstreets.FieldOfView.Jobs
 {
     [BurstCompile]
     internal struct BuildTriangleFanJob : IJob
     {
         public BuildTriangleFanJob(
-            NativeList<ViewportSegment> segments,
-            ViewportSpace space,
+            NativeList<Line> segments,
+            FieldOfViewSpace space,
             NativeList<Vector3> vertices,
             NativeList<int> indexes)
         {
@@ -20,8 +20,8 @@ namespace Backstreets.Viewport.Jobs
             this.indexes = indexes;
         }
 
-        [ReadOnly] private readonly NativeList<ViewportSegment> segments;
-        [ReadOnly] private readonly ViewportSpace space;
+        [ReadOnly] private readonly NativeList<Line> segments;
+        [ReadOnly] private readonly FieldOfViewSpace space;
         [WriteOnly] private NativeList<Vector3> vertices;
         [WriteOnly] private NativeList<int> indexes;
 
@@ -33,7 +33,7 @@ namespace Backstreets.Viewport.Jobs
             triangleIndices[0] = 2;
             triangleIndices[1] = 1;
             triangleIndices[2] = 0;
-            foreach (ViewportSegment segment in segments)
+            foreach (Line segment in segments)
             {
                 triangleVertices[0] = space.ViewportToWorld(segment.Left);
                 triangleVertices[1] = space.ViewportToWorld(segment.Right);

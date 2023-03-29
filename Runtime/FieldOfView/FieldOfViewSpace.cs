@@ -1,13 +1,13 @@
 using UnityEngine;
 
-namespace Backstreets.Viewport
+namespace Backstreets.FieldOfView
 {
-    internal readonly struct ViewportSpace
+    internal readonly struct FieldOfViewSpace
     {
         private readonly Matrix4x4 worldToViewport;
         private readonly Matrix4x4 viewportToWorld;
 
-        public ViewportSpace(Matrix4x4 worldToViewport, Matrix4x4 viewportToWorld)
+        public FieldOfViewSpace(Matrix4x4 worldToViewport, Matrix4x4 viewportToWorld)
         {
             this.worldToViewport = worldToViewport;
             this.viewportToWorld = viewportToWorld;
@@ -21,12 +21,9 @@ namespace Backstreets.Viewport
                 Position = position,
                 Left = WorldToViewport(prev),
                 Right = WorldToViewport(next),
-                Angle = CalculateAngle(position),
+                Angle = Angle(position),
             };
         }
-
-
-        public ViewportPoint WorldToViewportPoint(Vector2 point) => new(Convert(point, in worldToViewport));
 
         public Vector2 WorldToViewport(Vector2 point) => Convert(point, in worldToViewport);
 
@@ -39,7 +36,7 @@ namespace Backstreets.Viewport
             y = (float)((double)matrix.m10 * point.x + (double)matrix.m11 * point.y + matrix.m13)
         };
 
-        private static float CalculateAngle(Vector2 viewportPoint) => 
+        private static float Angle(Vector2 viewportPoint) => 
             Vector2.Angle(Vector2.right, viewportPoint) * Mathf.Sign(viewportPoint.y);
     }
 }

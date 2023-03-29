@@ -4,13 +4,13 @@ using Unity.Jobs;
 using Unity.Mathematics;
 using UnityEngine;
 
-namespace Backstreets.Viewport.Jobs
+namespace Backstreets.FieldOfView.Jobs
 {
     [BurstCompile]
     internal readonly struct BuildCornersJob : IJobParallelFor
     {
         public BuildCornersJob(
-            ViewportSpace space,
+            FieldOfViewSpace space,
             NativeArray<Vector2> input,
             NativeArray<Corner> corners,
             NativeArray<int2> spans)
@@ -23,7 +23,7 @@ namespace Backstreets.Viewport.Jobs
 
         [ReadOnly] private readonly NativeArray<Vector2> input;
         [ReadOnly] private readonly NativeArray<int2> spans;
-        [ReadOnly] private readonly ViewportSpace space;
+        [ReadOnly] private readonly FieldOfViewSpace space;
         [NativeDisableParallelForRestriction]
         [WriteOnly] private readonly NativeArray<Corner> corners;
 
@@ -45,12 +45,5 @@ namespace Backstreets.Viewport.Jobs
 
             static int Mod(int num, int radix) => num - radix * Mathf.FloorToInt((float)num / radix); // Note integer division
         }
-    }
-
-
-    internal struct ViewportSegment
-    {
-        public Vector2 Left;
-        public Vector2 Right;
     }
 }

@@ -4,7 +4,7 @@ using System.Linq;
 using UnityEditor;
 using UnityEngine;
 
-namespace Backstreets
+namespace Backstreets.FieldOfView.Sandbox
 {
     public class ViewportObstacle : MonoBehaviour
     {
