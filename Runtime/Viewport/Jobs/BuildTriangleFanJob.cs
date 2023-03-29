@@ -9,18 +9,18 @@ namespace Backstreets.Viewport.Jobs
     internal struct BuildTriangleFanJob : IJob
     {
         public BuildTriangleFanJob(
-            NativeList<ViewportLine> edges,
+            NativeList<ViewportSegment> segments,
             ViewportSpace space,
             NativeList<Vector3> vertices,
             NativeList<int> indexes)
         {
-            this.edges = edges;
+            this.segments = segments;
             this.space = space;
             this.vertices = vertices;
             this.indexes = indexes;
         }
 
-        [ReadOnly] private readonly NativeList<ViewportLine> edges;
+        [ReadOnly] private readonly NativeList<ViewportSegment> segments;
         [ReadOnly] private readonly ViewportSpace space;
         [WriteOnly] private NativeList<Vector3> vertices;
         [WriteOnly] private NativeList<int> indexes;
@@ -29,18 +29,18 @@ namespace Backstreets.Viewport.Jobs
         {
             NativeArray<Vector3> triangleVertices = new(2, Allocator.Temp);
             NativeArray<int> triangleIndices = new(3, Allocator.Temp);
-            vertices.Add(space.Origin);
-            triangleIndices[0] = 0;
-            triangleIndices[1] = 2;
-            triangleIndices[2] = 1;
-            foreach (ViewportLine edge in edges)
+            vertices.Add(space.ViewportToWorld(Vector2.zero));
+            triangleIndices[0] = 2;
+            triangleIndices[1] = 1;
+            triangleIndices[2] = 0;
+            foreach (ViewportSegment segment in segments)
             {
-                triangleVertices[0] = space.Convert(edge.Left);
-                triangleVertices[1] = space.Convert(edge.Right);
+                triangleVertices[0] = space.ViewportToWorld(segment.Left);
+                triangleVertices[1] = space.ViewportToWorld(segment.Right);
                 vertices.AddRange(triangleVertices);
                 indexes.AddRange(triangleIndices);
+                triangleIndices[0] += 2;
                 triangleIndices[1] += 2;
-                triangleIndices[2] += 2;
             }
 
             triangleVertices.Dispose();

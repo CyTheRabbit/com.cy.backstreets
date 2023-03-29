@@ -4,53 +4,42 @@ namespace Backstreets.Viewport
 {
     internal readonly struct ViewportSpace
     {
-        public readonly Vector2 Origin;
-        public readonly Vector2 Normal;
-        public readonly ViewportLine PortalLine;
+        private readonly Matrix4x4 worldToViewport;
+        private readonly Matrix4x4 viewportToWorld;
 
-        public ViewportSpace(PortalWindow window)
+        public ViewportSpace(Matrix4x4 worldToViewport, Matrix4x4 viewportToWorld)
         {
-            Origin = window.Origin;
-            Normal = Vector2.Perpendicular(window.RightBorder - window.LeftBorder).normalized;
-            PortalLine = new ViewportLine
+            this.worldToViewport = worldToViewport;
+            this.viewportToWorld = viewportToWorld;
+        }
+
+        public Corner MakeCorner(Vector2 vertex, Vector2 prev, Vector2 next)
+        {
+            Vector2 position = WorldToViewport(vertex);
+            return new Corner
             {
-                Left = Convert(window.LeftBorder, Origin, Normal),
-                Right = Convert(window.RightBorder, Origin, Normal)
+                Position = position,
+                Left = WorldToViewport(prev),
+                Right = WorldToViewport(next),
+                Angle = CalculateAngle(position),
             };
         }
 
-        public ViewportPoint Convert(Vector2 worldPoint) => Convert(worldPoint, Origin, Normal);
 
-        public Vector2 Convert(ViewportPoint localPoint) => Convert(localPoint, Origin);
+        public ViewportPoint WorldToViewportPoint(Vector2 point) => new(Convert(point, in worldToViewport));
 
-        public ViewportLine MakeLine(Vector2 left, Vector2 right) => new()
+        public Vector2 WorldToViewport(Vector2 point) => Convert(point, in worldToViewport);
+
+        public Vector2 ViewportToWorld(Vector2 point) => Convert(point, in viewportToWorld);
+
+
+        private static Vector2 Convert(Vector2 point, in Matrix4x4 matrix) => new()
         {
-            Left = Convert(left, Origin, Normal),
-            Right = Convert(right, Origin, Normal)
+            x = (float)((double)matrix.m00 * point.x + (double)matrix.m01 * point.y + matrix.m03),
+            y = (float)((double)matrix.m10 * point.x + (double)matrix.m11 * point.y + matrix.m13)
         };
 
-        public ViewportLine? Clamp(ViewportLine line)
-        {
-            if (line.Left.Angle >= PortalLine.Right.Angle) return null;
-            if (line.Right.Angle <= PortalLine.Left.Angle) return null;
-            return new ViewportLine
-            {
-                Left = line.Left.Angle > PortalLine.Left.Angle ? line.Left : PortalLine.Left,
-                Right = line.Right.Angle < PortalLine.Right.Angle ? line.Right : PortalLine.Right
-            };
-        }
-
-        private static ViewportPoint Convert(Vector2 worldPoint, Vector2 origin, Vector2 normal)
-        {
-            Vector2 localPoint = worldPoint - origin;
-            return new ViewportPoint
-            {
-                XY = localPoint,
-                Angle = -Vector2.SignedAngle(normal, localPoint)
-            };
-        }
-
-        private static Vector2 Convert(ViewportPoint localPoint, Vector2 origin) =>
-            localPoint.XY + origin;
+        private static float CalculateAngle(Vector2 viewportPoint) => 
+            Vector2.Angle(Vector2.right, viewportPoint) * Mathf.Sign(viewportPoint.y);
     }
 }

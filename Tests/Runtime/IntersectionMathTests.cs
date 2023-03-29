@@ -9,7 +9,7 @@ namespace Backstreets.Tests
         [TestCaseSource(nameof(IntersectionTestcases))]
         public void TestIntersections((ViewportLine a, ViewportLine b, Vector2? result) testcase)
         {
-            Vector2? result = ViewportMath.GetIntersection(testcase.a, testcase.b);
+            Vector2? result = ViewportMath.GetIntersection(testcase.a.Left, testcase.a.Right, testcase.b.Left, testcase.b.Right);
             
             Assert.That(result, Is.EqualTo(testcase.result));
         }
@@ -26,7 +26,7 @@ namespace Backstreets.Tests
         [TestCaseSource(nameof(ProjectionTestcases))]
         public void TestProjectionFromOrigin((ViewportLine line, Vector2 direction, Vector2? result) testcase)
         {
-            Vector2? result = ViewportMath.ProjectFromOrigin(testcase.line, testcase.direction);
+            Vector2? result = ViewportMath.ProjectFromOrigin(testcase.line.Left, testcase.line.Right, testcase.direction);
             
             Assert.That(result, Is.EqualTo(testcase.result));
         }
