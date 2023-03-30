@@ -1,7 +1,7 @@
 using Unity.Burst;
 using Unity.Collections;
 using Unity.Jobs;
-using UnityEngine;
+using Unity.Mathematics;
 
 namespace Backstreets.FieldOfView.Jobs
 {
@@ -11,7 +11,7 @@ namespace Backstreets.FieldOfView.Jobs
         public BuildTriangleFanJob(
             NativeList<Line> segments,
             FieldOfViewSpace space,
-            NativeList<Vector3> vertices,
+            NativeList<float3> vertices,
             NativeList<int> indexes)
         {
             this.segments = segments;
@@ -22,21 +22,21 @@ namespace Backstreets.FieldOfView.Jobs
 
         [ReadOnly] private readonly NativeList<Line> segments;
         [ReadOnly] private readonly FieldOfViewSpace space;
-        [WriteOnly] private NativeList<Vector3> vertices;
+        [WriteOnly] private NativeList<float3> vertices;
         [WriteOnly] private NativeList<int> indexes;
 
         public void Execute()
         {
-            NativeArray<Vector3> triangleVertices = new(2, Allocator.Temp);
+            NativeArray<float3> triangleVertices = new(2, Allocator.Temp);
             NativeArray<int> triangleIndices = new(3, Allocator.Temp);
-            vertices.Add(space.ViewportToWorld(Vector2.zero));
+            vertices.Add(ToWorld(float2.zero));
             triangleIndices[0] = 2;
             triangleIndices[1] = 1;
             triangleIndices[2] = 0;
             foreach (Line segment in segments)
             {
-                triangleVertices[0] = space.ViewportToWorld(segment.Left);
-                triangleVertices[1] = space.ViewportToWorld(segment.Right);
+                triangleVertices[0] = ToWorld(segment.Left);
+                triangleVertices[1] = ToWorld(segment.Right);
                 vertices.AddRange(triangleVertices);
                 indexes.AddRange(triangleIndices);
                 triangleIndices[0] += 2;
@@ -45,6 +45,12 @@ namespace Backstreets.FieldOfView.Jobs
 
             triangleVertices.Dispose();
             triangleIndices.Dispose();
+        }
+
+        private float3 ToWorld(float2 point)
+        {
+            float2 worldPoint = space.ViewportToWorld(point);
+            return new float3(worldPoint.x, worldPoint.y, 0);
         }
     }
 }

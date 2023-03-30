@@ -1,14 +1,14 @@
 using System;
-using UnityEngine;
+using Unity.Mathematics;
 
 namespace Backstreets.FieldOfView
 {
     public struct Line : IEquatable<Line>
     {
-        public Vector2 Left;
-        public Vector2 Right;
+        public float2 Left;
+        public float2 Right;
 
-        public Line(Vector2 left, Vector2 right)
+        public Line(float2 left, float2 right)
         {
             Left = left;
             Right = right;

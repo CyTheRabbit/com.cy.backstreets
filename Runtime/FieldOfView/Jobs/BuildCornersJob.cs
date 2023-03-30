@@ -2,7 +2,6 @@ using Unity.Burst;
 using Unity.Collections;
 using Unity.Jobs;
 using Unity.Mathematics;
-using UnityEngine;
 
 namespace Backstreets.FieldOfView.Jobs
 {
@@ -11,7 +10,7 @@ namespace Backstreets.FieldOfView.Jobs
     {
         public BuildCornersJob(
             FieldOfViewSpace space,
-            NativeArray<Vector2> input,
+            NativeArray<float2> input,
             NativeArray<Corner> corners,
             NativeArray<int2> spans)
         {
@@ -21,7 +20,7 @@ namespace Backstreets.FieldOfView.Jobs
             this.spans = spans;
         }
 
-        [ReadOnly] private readonly NativeArray<Vector2> input;
+        [ReadOnly] private readonly NativeArray<float2> input;
         [ReadOnly] private readonly NativeArray<int2> spans;
         [ReadOnly] private readonly FieldOfViewSpace space;
         [NativeDisableParallelForRestriction]
@@ -30,7 +29,7 @@ namespace Backstreets.FieldOfView.Jobs
         public void Execute(int spanIndex)
         {
             int2 slice = spans[spanIndex];
-            NativeSlice<Vector2> source = input.Slice(slice.x, slice.y);
+            NativeSlice<float2> source = input.Slice(slice.x, slice.y);
             NativeSlice<Corner> destination = new(corners, slice.x, slice.y);
 
             for (int i = 0; i < source.Length; i++)
@@ -43,7 +42,7 @@ namespace Backstreets.FieldOfView.Jobs
                     next: source[nextIndex]);
             }
 
-            static int Mod(int num, int radix) => num - radix * Mathf.FloorToInt((float)num / radix); // Note integer division
+            static int Mod(int num, int radix) => num - radix * (int)math.floor((float)num / radix);
         }
     }
 }

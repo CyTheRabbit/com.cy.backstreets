@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using Unity.Collections;
 using Unity.Jobs;
-using UnityEngine;
+using Unity.Mathematics;
 using static Backstreets.FieldOfView.LineMath;
 
 namespace Backstreets.FieldOfView
@@ -20,12 +20,7 @@ namespace Backstreets.FieldOfView
             comparer = new CompareObstacleDistance();
         }
 
-        public Line GetClosestObstacle(Vector2 ray)
-        {
-            return obstacles[0];
-        }
-
-        public Vector2 Raycast(Vector2 ray)
+        public float2 Raycast(float2 ray)
         {
             if (obstacles.IsEmpty) return default;
             Line obstacle = obstacles[0];

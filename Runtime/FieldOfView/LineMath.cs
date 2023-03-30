@@ -1,16 +1,23 @@
 using System;
-using UnityEngine;
+using Unity.Mathematics;
 
 namespace Backstreets.FieldOfView
 {
     internal static class LineMath
     {
-        private static float Determinant(Vector2 a, Vector2 b) => a.x * b.y - a.y * b.x;
+        private static float Determinant(float2 a, float2 b) => a.x * b.y - a.y * b.x;
 
-        internal static Vector2? GetIntersection(Line a, Line b)
+        internal static float Angle(float2 point)
         {
-            Vector2 aDiff = a.Left - a.Right;
-            Vector2 bDiff = b.Left - b.Right;
+            float distance = math.length(point);
+            float sign = math.sign(point.y) switch { 0 when point.x < 0 => 1, var rawSign => rawSign };
+            return distance < math.EPSILON ? 0 : math.degrees(math.acos(point.x / distance)) * sign;
+        }
+
+        internal static float2? GetIntersection(Line a, Line b)
+        {
+            float2 aDiff = a.Left - a.Right;
+            float2 bDiff = b.Left - b.Right;
             float denominator = Determinant(aDiff, bDiff);
             if (denominator == 0) return null; // TODO: test if if-less is faster
             float aDeterminant = Determinant(a.Left, a.Right);
@@ -18,32 +25,26 @@ namespace Backstreets.FieldOfView
             return (bDiff * aDeterminant - aDiff * bDeterminant) / denominator;
         }
 
-        internal static Vector2? ProjectFromOrigin(Line line, Vector2 ray)
+        internal static float2? ProjectFromOrigin(Line line, float2 ray)
         {
-            Vector2 lineDiff = line.Left - line.Right;
+            float2 lineDiff = line.Left - line.Right;
             float denominator = Determinant(lineDiff, ray);
-            if (denominator == 0) return Vector2.zero;
+            if (denominator == 0) return float2.zero;
             float distance = Determinant(line.Left, line.Right) / denominator;
             return ray * distance;
         }
 
-        internal static LineDomain GetDomain(Line line, Vector2 testPoint)
-        {
-            // TODO: Replace vector math with determinant of line relative to testPoint
-            Vector2 tangent = line.Right - line.Left;
-            Vector2 normal = Vector2.Perpendicular(tangent);
-            Vector2 toTestPoint = testPoint - line.Left;
-            return Vector2.Dot(normal, toTestPoint) switch
+        internal static LineDomain GetDomain(Line line, float2 testPoint) => 
+            Determinant(line.Left - line.Right, line.Left - testPoint) switch
             {
                 < 0 => LineDomain.Bottom,
                 0 => LineDomain.Line,
                 > 0 => LineDomain.Top,
                 _ => throw new ArithmeticException()
             };
-        }
 
-        internal static RayDomain GetDomain(Vector2 ray, Vector2 testPoint) =>
-            Vector2.Dot(Vector2.Perpendicular(ray), testPoint) switch
+        internal static RayDomain GetDomain(float2 ray, float2 testPoint) =>
+            Determinant(ray, testPoint) switch
             {
                 < 0 => RayDomain.Left,
                 0 => RayDomain.Straight,
@@ -66,7 +67,8 @@ namespace Backstreets.FieldOfView
 
         internal static int CompareAngleCyclic(float x, float y)
         {
-            float cyclicDifference = Mathf.Repeat(x - y, 360);
+            float difference = x - y;
+            float cyclicDifference = difference - math.floor(difference / 360) * 360;
             return cyclicDifference switch
             {
                 0 => 0,
@@ -77,9 +79,9 @@ namespace Backstreets.FieldOfView
             };
         }
 
-        internal static float? GetDistanceFromOrigin(Line line, Vector2 ray)
+        internal static float? GetDistanceFromOrigin(Line line, float2 ray)
         {
-            Vector2 lineDiff = line.Left - line.Right;
+            float2 lineDiff = line.Left - line.Right;
             float denominator = Determinant(ray, lineDiff);
             if (denominator == 0) return null;
             float determinant = Determinant(line.Left, line.Right);

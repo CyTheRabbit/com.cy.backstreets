@@ -1,6 +1,7 @@
 using Unity.Burst;
 using Unity.Collections;
 using Unity.Jobs;
+using Unity.Mathematics;
 using UnityEngine;
 using static Backstreets.FieldOfView.LineMath;
 
@@ -26,8 +27,8 @@ namespace Backstreets.FieldOfView.Jobs
             builder.StartSegment(lineOfSight.Raycast(Vector2.left));
             foreach (Corner corner in corners)
             {
-                Vector2 ray = corner.Position.normalized;
-                Vector2 hit = lineOfSight.Raycast(ray);
+                float2 ray =  math.normalize(corner.Position);
+                float2 hit = lineOfSight.Raycast(ray);
                 LineOfSight.UpdateReport report = UpdateLineOfSight(corner);
                 if (report.ClosestObstacleChanged)
                 {
@@ -36,7 +37,7 @@ namespace Backstreets.FieldOfView.Jobs
                 }
             }
 
-            builder.EndSegment(lineOfSight.Raycast(Vector2.right));
+            builder.EndSegment(lineOfSight.Raycast(Vector2.left));
         }
 
         private LineOfSight.UpdateReport UpdateLineOfSight(Corner corner)
@@ -46,7 +47,7 @@ namespace Backstreets.FieldOfView.Jobs
             return leftReport + rightReport;
         }
 
-        private LineOfSight.UpdateReport UpdateLineOfSight(Vector2 vertex, Vector2 companion)
+        private LineOfSight.UpdateReport UpdateLineOfSight(float2 vertex, float2 companion)
         {
             RayDomain lineDirection = GetDomain(vertex, companion);
             bool lineInvisible = lineDirection is RayDomain.Straight;
@@ -69,22 +70,22 @@ namespace Backstreets.FieldOfView.Jobs
         private ref struct SegmentBuilder
         {
             private NativeList<Line> output;
-            private Vector2 left;
+            private float2 left;
 
             public SegmentBuilder(NativeList<Line> output)
             {
                 this.output = output;
-                left = Vector2.zero;
+                left = float2.zero;
             }
 
-            internal void StartSegment(Vector2 start)
+            internal void StartSegment(float2 start)
             {
                 left = start;
             }
 
-            internal void EndSegment(Vector2 end)
+            internal void EndSegment(float2 end)
             {
-                Line segment = new() { Left = left, Right = end };
+                Line segment = new(left, end);
                 output.Add(segment);
             }
         }

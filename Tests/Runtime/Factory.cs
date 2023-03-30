@@ -1,12 +1,11 @@
 using Backstreets.FieldOfView;
+using Unity.Mathematics;
 using UnityEngine;
 
 namespace Backstreets.Tests
 {
     internal static class A
     {
-        public static Line Line(Vector2 left, Vector2 right) => new() { Left = left, Right = right };
-
-        public static Vector2 Point(float x, float y) => new() { x = x, y = y };
+        public static Line Line(float2 left, float2 right) => new(left, right);
     }
 }

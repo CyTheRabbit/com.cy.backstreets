@@ -1,13 +1,13 @@
 using System.Collections.Generic;
-using UnityEngine;
+using Unity.Mathematics;
 
 namespace Backstreets.FieldOfView
 {
     internal struct Corner
     {
-        public Vector2 Position;
-        public Vector2 Left;
-        public Vector2 Right;
+        public float2 Position;
+        public float2 Left;
+        public float2 Right;
         public float Angle; // TODO: Test if tangent suits better than angle
 
 

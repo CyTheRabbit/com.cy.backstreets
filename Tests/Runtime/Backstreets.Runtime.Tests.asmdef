@@ -7,5 +7,8 @@
     "nunit.framework.dll"
   ],
   "autoReferenced": false,
-  "references":[ "Backstreets" ]
+  "references":[
+    "Backstreets",
+    "Unity.Mathematics"
+  ]
 }

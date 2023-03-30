@@ -25,15 +25,12 @@ namespace Backstreets.FieldOfView.Sandbox
 
         private void RebuildFieldOfViewMesh()
         {
-            Transform transformCached = transform;
-            FieldOfViewSpace space = new(
-                worldToViewport: transformCached.worldToLocalMatrix,
-                viewportToWorld: transformCached.localToWorldMatrix);
+            FieldOfViewSpace space = new((Vector2) transform.position);
 
             int totalVertexCount = obstacles.Sum(obstacle => obstacle.Vertices.Length);
             NativeArray<Corner> corners = new(totalVertexCount, Allocator.TempJob);
             NativeList<Line> viewportSegments = new(totalVertexCount + 1, Allocator.TempJob);
-            NativeList<Vector3> outputVertices = new(totalVertexCount * 2 + 1, Allocator.TempJob);
+            NativeList<float3> outputVertices = new(totalVertexCount * 2 + 1, Allocator.TempJob);
             NativeList<int> outputIndices = new(totalVertexCount * 3, Allocator.TempJob);
 
             JobHandle dataAssemblyHandle = ScheduleDataAssembly(in corners, space);
@@ -70,7 +67,8 @@ namespace Backstreets.FieldOfView.Sandbox
                 nextUnusedOutput += span.y;
             }
 
-            JobHandle assemble = new BuildCornersJob(space, source, corners, spans).Schedule(arrayLength: spans.Length, innerloopBatchCount: 4);
+            JobHandle assemble = new BuildCornersJob(space, source.Reinterpret<float2>(), corners, spans)
+                .Schedule(arrayLength: spans.Length, innerloopBatchCount: 4);
 
             { // Cleanup
                 source.Dispose(assemble);
@@ -107,7 +105,7 @@ namespace Backstreets.FieldOfView.Sandbox
         private static JobHandle ScheduleMeshGeneration(
             FieldOfViewSpace space,
             in NativeList<Line> segments,
-            in NativeList<Vector3> outputVertices,
+            in NativeList<float3> outputVertices,
             in NativeList<int> outputIndices,
             JobHandle inputDependency)
         {
@@ -115,19 +113,19 @@ namespace Backstreets.FieldOfView.Sandbox
             return job.Schedule(inputDependency);
         }
 
-        private void PrepareFieldOfViewMesh(NativeList<Vector3> outputVertices, NativeList<int> outputIndices)
+        private void PrepareFieldOfViewMesh(NativeList<float3> outputVertices, NativeList<int> outputIndices)
         {
             mesh ??= new Mesh();
             mesh.Clear();
             mesh.SetVertices(outputVertices.AsArray());
             mesh.SetIndices(outputIndices.AsArray(), MeshTopology.Triangles, 0);
 
-            PrepareMeshColor(outputVertices);
+            PrepareMeshColor(outputVertices.Length);
         }
 
-        private void PrepareMeshColor(NativeList<Vector3> outputVertices)
+        private void PrepareMeshColor(int size)
         {
-            NativeArray<Color> colors = new(outputVertices.AsArray().Length, Allocator.Temp);
+            NativeArray<Color> colors = new(size, Allocator.Temp);
             switch (colorMode)
             {
                 case ColorMode.Straight:
