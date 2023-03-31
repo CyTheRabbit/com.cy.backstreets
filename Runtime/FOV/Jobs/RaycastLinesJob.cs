@@ -1,12 +1,13 @@
 using System;
+using Backstreets.FOV.Geometry;
 using Unity.Burst;
 using Unity.Collections;
 using Unity.Jobs;
 using Unity.Mathematics;
 using UnityEngine;
-using static Backstreets.FieldOfView.LineMath;
+using static Backstreets.FOV.Geometry.LineMath;
 
-namespace Backstreets.FieldOfView.Jobs
+namespace Backstreets.FOV.Jobs
 {
     [BurstCompile]
     internal struct RaycastLinesJob : IJob

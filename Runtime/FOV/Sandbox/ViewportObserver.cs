@@ -1,6 +1,7 @@
 using System;
 using System.Linq;
-using Backstreets.FieldOfView.Jobs;
+using Backstreets.FOV.Geometry;
+using Backstreets.FOV.Jobs;
 using Unity.Collections;
 using Unity.Jobs;
 using Unity.Mathematics;
@@ -8,7 +9,7 @@ using UnityEditor;
 using UnityEngine;
 using UnityEngine.Rendering;
 
-namespace Backstreets.FieldOfView.Sandbox
+namespace Backstreets.FOV.Sandbox
 {
     public class ViewportObserver : MonoBehaviour
     {
@@ -16,6 +17,12 @@ namespace Backstreets.FieldOfView.Sandbox
         [SerializeField] private Color fieldOfViewColor = new(0.5f, 1, 0.75f, 0.02f);
         [SerializeField] private ColorMode colorMode;
         private Mesh mesh;
+
+        public void Awake()
+        {
+            mesh = new Mesh();
+            mesh.MarkDynamic();
+        }
 
         public void OnDrawGizmos()
         {
@@ -115,7 +122,6 @@ namespace Backstreets.FieldOfView.Sandbox
 
         private void PrepareFieldOfViewMesh(NativeList<float3> outputVertices, NativeList<int> outputIndices)
         {
-            mesh ??= new Mesh();
             mesh.Clear();
             mesh.SetVertices(outputVertices.AsArray());
             mesh.SetIndices(outputIndices.AsArray(), MeshTopology.Triangles, 0);

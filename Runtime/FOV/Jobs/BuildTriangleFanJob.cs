@@ -1,9 +1,10 @@
+using Backstreets.FOV.Geometry;
 using Unity.Burst;
 using Unity.Collections;
 using Unity.Jobs;
 using Unity.Mathematics;
 
-namespace Backstreets.FieldOfView.Jobs
+namespace Backstreets.FOV.Jobs
 {
     [BurstCompile]
     internal struct BuildTriangleFanJob : IJob

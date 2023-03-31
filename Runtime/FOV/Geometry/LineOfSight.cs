@@ -3,9 +3,9 @@ using System.Collections.Generic;
 using Unity.Collections;
 using Unity.Jobs;
 using Unity.Mathematics;
-using static Backstreets.FieldOfView.LineMath;
+using static Backstreets.FOV.Geometry.LineMath;
 
-namespace Backstreets.FieldOfView
+namespace Backstreets.FOV.Geometry
 {
     [BurstCompatible]
     public struct LineOfSight : INativeDisposable

@@ -1,4 +1,4 @@
-using Backstreets.FieldOfView;
+using Backstreets.FOV.Geometry;
 using NUnit.Framework;
 using Unity.Mathematics;
 using static Unity.Mathematics.math;

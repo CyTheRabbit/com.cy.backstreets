@@ -1,6 +1,5 @@
-using Backstreets.FieldOfView;
+using Backstreets.FOV.Geometry;
 using Unity.Mathematics;
-using UnityEngine;
 
 namespace Backstreets.Tests
 {

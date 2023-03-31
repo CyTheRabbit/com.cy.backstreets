@@ -1,6 +1,6 @@
 using Unity.Mathematics;
 
-namespace Backstreets.FieldOfView
+namespace Backstreets.FOV.Geometry
 {
     internal readonly struct FieldOfViewSpace
     {
