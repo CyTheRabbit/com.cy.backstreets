@@ -10,22 +10,25 @@ namespace Backstreets.FOV.Geometry
     [BurstCompatible]
     internal struct LineOfSight : INativeDisposable
     {
-        // It might be more efficient to use a linked list.
-        private NativeList<Line> obstacles;
-        private readonly CompareObstacleDistance comparer;
+        private NativeList<Line> obstacles; // It might be more efficient to use a linked list.
+        private float2 ray;
 
         public LineOfSight(int capacity)
         {
             obstacles = new NativeList<Line>(capacity, Allocator.TempJob);
-            comparer = new CompareObstacleDistance();
+            ray = default;
         }
 
-        public float2 Raycast(float2 ray)
+        public readonly float2 Raycast()
         {
             if (obstacles.IsEmpty) return default;
             Line obstacle = obstacles[0];
             return ProjectFromOrigin(obstacle, ray) ?? throw new Exception();
         }
+
+        public void LookAt(float2 direction) => ray = direction;
+
+        public void LookAt(Corner corner) => ray = math.normalizesafe(corner.Position);
 
         public UpdateReport Update(Corner corner)
         {
@@ -42,6 +45,7 @@ namespace Backstreets.FOV.Geometry
 
         public UpdateReport AddObstacle(Line insert)
         {
+            CompareObstacleDistance comparer = new();
             int insertIndex;
             for (insertIndex = 0; insertIndex < obstacles.Length; insertIndex++)
             {

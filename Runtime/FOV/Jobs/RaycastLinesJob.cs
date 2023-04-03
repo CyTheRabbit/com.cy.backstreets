@@ -7,15 +7,18 @@ using Unity.Mathematics;
 namespace Backstreets.FOV.Jobs
 {
     [BurstCompile]
-    internal struct RaycastLinesJob : IJob
+    internal struct RaycastLinesJob<TVisitor> : IJob
+        where TVisitor : struct, ILineOfSightVisitor
     {
-        public RaycastLinesJob(NativeArray<Corner> corners, float2 ray, LineOfSight hits)
+        public RaycastLinesJob(NativeArray<Corner> corners, float2 ray, LineOfSight hits, TVisitor visitor)
         {
             this.corners = corners;
             this.ray = ray;
             this.hits = hits;
+            this.visitor = visitor;
         }
 
+        private TVisitor visitor;
         [ReadOnly] private readonly NativeArray<Corner> corners; // array may be unordered, since this job tests every element.
         [ReadOnly] private readonly float2 ray;
         private LineOfSight hits;
@@ -25,8 +28,10 @@ namespace Backstreets.FOV.Jobs
             foreach (Corner corner in corners)
             {
                 // each line has two corners, therefore it occurs twice in the corners list.
-                bool isLineStart = corner.End == Corner.Endpoint.Right;
-                if (isLineStart && IsHit(corner.Line))
+                if (corner.End == Corner.Endpoint.Left) continue;
+                if (!visitor.ShouldProcess(corner.Line)) continue;
+
+                if (IsHit(corner.Line))
                 {
                     hits.AddObstacle(corner.Line);
                 }

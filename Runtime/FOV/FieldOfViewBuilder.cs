@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Backstreets.FOV.Geometry;
 using Backstreets.FOV.Jobs;
+using Backstreets.FOV.Jobs.SweepVisitors;
 using Unity.Collections;
 using Unity.Jobs;
 using Unity.Mathematics;
@@ -62,28 +63,36 @@ namespace Backstreets.FOV
             in JobPromise<BlockingGeometry> geometry,
             FieldOfViewSpace space)
         {
+
+            int estimatedBoundsCount = geometry.Result.Corners.Length / 2 + 1;
+            FieldOfView result = new(space, estimatedBoundsCount, Allocator.TempJob);
+            FieldOfViewBuilderVisitor builder = new(result.Bounds);
+
+            JobHandle buildBounds = SweepLineOfSight(builder, geometry);
+
+            return new JobPromise<FieldOfView>(buildBounds, result);
+        }
+
+        private static JobHandle SweepLineOfSight<T>(T visitor, in JobPromise<BlockingGeometry> geometry)
+            where T : struct, ILineOfSightVisitor
+        {
             NativeArray<Corner> corners = geometry.Result.Corners;
             NativeArray<Corner> orderedCorners = new(corners.Length, Allocator.TempJob);
             LineOfSight lineOfSight = new(capacity: 16);
 
-            int estimatedBoundsCount = corners.Length / 2 + 2;
-            FieldOfView result = new(space, estimatedBoundsCount, Allocator.TempJob);
-
             JobHandle copyCorners = new CopyArrayJob<Corner>(corners, orderedCorners).Schedule(geometry);
             JobHandle orderCorners = orderedCorners.SortJob(new Corner.CompareByAngle()).Schedule(copyCorners);
-            JobHandle raycastStartingLineOfSight =
-                new RaycastLinesJob(corners, Vector2.left, lineOfSight).Schedule(geometry);
-            JobHandle preparationJobs = JobHandle.CombineDependencies(raycastStartingLineOfSight, orderCorners);
+            JobHandle prepareStartingLineOfSight = new RaycastLinesJob<T>(corners, Vector2.left, lineOfSight, visitor).Schedule(geometry);
+            JobHandle preparationJobs = JobHandle.CombineDependencies(prepareStartingLineOfSight, orderCorners);
 
-            JobHandle buildBounds = new BuildFieldOfViewBounds(lineOfSight, orderedCorners, result.Bounds)
-                .Schedule(preparationJobs);
+            JobHandle sweep = new SweepLineOfSightJob<T>(lineOfSight, orderedCorners, visitor).Schedule(preparationJobs);
 
             { // Cleanup
-                orderedCorners.Dispose(buildBounds);
-                lineOfSight.Dispose(buildBounds);
+                orderedCorners.Dispose(sweep);
+                lineOfSight.Dispose(sweep);
             }
 
-            return new JobPromise<FieldOfView>(buildBounds, result);
+            return sweep;
         }
 
         /// <remarks>
