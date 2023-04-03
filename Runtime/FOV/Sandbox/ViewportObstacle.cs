@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Unity.Mathematics;
 using UnityEditor;
 using UnityEngine;
 
@@ -8,10 +9,10 @@ namespace Backstreets.FOV.Sandbox
 {
     public class ViewportObstacle : MonoBehaviour
     {
-        [SerializeField] private Vector2[] vertices = Array.Empty<Vector2>();
+        [SerializeField] private float2[] vertices = Array.Empty<float2>();
 
 
-        public Vector2[] Vertices => vertices;
+        public float2[] Vertices => vertices;
 
 
         private void OnDrawGizmos()
@@ -19,8 +20,8 @@ namespace Backstreets.FOV.Sandbox
             if (vertices.Length < 2) return;
 
             Handles.color = Color.white;
-            IEnumerable<Vector2> shiftedVertices = vertices.Skip(1).Append(vertices.First());
-            IEnumerable<(Vector2, Vector2)> lines = vertices.Zip(shiftedVertices,
+            IEnumerable<float2> shiftedVertices = vertices.Skip(1).Append(vertices.First());
+            IEnumerable<(float2, float2)> lines = vertices.Zip(shiftedVertices,
                 (first, second) => (first, second));
 
             foreach ((Vector2 first, Vector2 second) in lines)

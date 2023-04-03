@@ -10,36 +10,30 @@ namespace Backstreets.FOV.Jobs
     internal struct BuildTriangleFanJob : IJob
     {
         public BuildTriangleFanJob(
-            NativeList<Line> segments,
-            FieldOfViewSpace space,
-            NativeList<float3> vertices,
-            NativeList<int> indexes)
+            FieldOfView fieldOfView,
+            FanMeshData meshData)
         {
-            this.segments = segments;
-            this.space = space;
-            this.vertices = vertices;
-            this.indexes = indexes;
+            this.fieldOfView = fieldOfView;
+            this.meshData = meshData;
         }
 
-        [ReadOnly] private readonly NativeList<Line> segments;
-        [ReadOnly] private readonly FieldOfViewSpace space;
-        [WriteOnly] private NativeList<float3> vertices;
-        [WriteOnly] private NativeList<int> indexes;
-
+        [ReadOnly] private readonly FieldOfView fieldOfView;
+        [WriteOnly] private FanMeshData meshData;
+ 
         public void Execute()
         {
             NativeArray<float3> triangleVertices = new(2, Allocator.Temp);
             NativeArray<int> triangleIndices = new(3, Allocator.Temp);
-            vertices.Add(ToWorld(float2.zero));
+            meshData.Vertices.Add(ToWorld(float2.zero));
             triangleIndices[0] = 2;
             triangleIndices[1] = 1;
             triangleIndices[2] = 0;
-            foreach (Line segment in segments)
+            foreach (Line bound in fieldOfView.Bounds)
             {
-                triangleVertices[0] = ToWorld(segment.Left);
-                triangleVertices[1] = ToWorld(segment.Right);
-                vertices.AddRange(triangleVertices);
-                indexes.AddRange(triangleIndices);
+                triangleVertices[0] = ToWorld(bound.Left);
+                triangleVertices[1] = ToWorld(bound.Right);
+                meshData.Vertices.AddRange(triangleVertices);
+                meshData.Indices.AddRange(triangleIndices);
                 triangleIndices[0] += 2;
                 triangleIndices[1] += 2;
             }
@@ -50,7 +44,7 @@ namespace Backstreets.FOV.Jobs
 
         private float3 ToWorld(float2 point)
         {
-            float2 worldPoint = space.ViewportToWorld(point);
+            float2 worldPoint = fieldOfView.Space.ViewportToWorld(point);
             return new float3(worldPoint.x, worldPoint.y, 0);
         }
     }

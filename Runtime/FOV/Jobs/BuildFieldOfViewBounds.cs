@@ -9,22 +9,22 @@ using static Backstreets.FOV.Geometry.LineMath;
 namespace Backstreets.FOV.Jobs
 {
     [BurstCompile]
-    internal struct BuildViewportSegmentsJob : IJob
+    internal struct BuildFieldOfViewBounds : IJob
     {
-        public BuildViewportSegmentsJob(LineOfSight lineOfSight, NativeArray<Corner> corners, NativeList<Line> segments)
+        public BuildFieldOfViewBounds(LineOfSight lineOfSight, NativeArray<Corner> corners, NativeList<Line> bounds)
         {
             this.lineOfSight = lineOfSight;
             this.corners = corners;
-            this.segments = segments;
+            this.bounds = bounds;
         }
 
         private LineOfSight lineOfSight;
         [ReadOnly] private readonly NativeArray<Corner> corners;
-        [WriteOnly] private readonly NativeList<Line> segments;
+        [WriteOnly] private readonly NativeList<Line> bounds;
 
         public void Execute()
         {
-            SegmentBuilder builder = new(segments);
+            SegmentBuilder builder = new(bounds);
             builder.StartSegment(lineOfSight.Raycast(Vector2.left));
             foreach (Corner corner in corners)
             {
