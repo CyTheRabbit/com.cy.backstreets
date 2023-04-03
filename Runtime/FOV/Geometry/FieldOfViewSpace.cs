@@ -11,17 +11,8 @@ namespace Backstreets.FOV.Geometry
             this.origin = origin;
         }
 
-        public Corner MakeCorner(float2 vertex, float2 prev, float2 next)
-        {
-            float2 position = WorldToViewport(vertex);
-            return new Corner
-            {
-                Position = position,
-                Left = WorldToViewport(prev),
-                Right = WorldToViewport(next),
-                Angle = LineMath.Angle(position),
-            };
-        }
+        public Line WorldToViewport(Line line) =>
+            new(right: WorldToViewport(line.Right), left: WorldToViewport(line.Left));
 
         public float2 WorldToViewport(float2 point) => point - origin;
 

@@ -16,50 +16,50 @@ namespace Backstreets.FOV.Geometry
 
         internal static float2? GetIntersection(Line a, Line b)
         {
-            float2 aDiff = a.Left - a.Right;
-            float2 bDiff = b.Left - b.Right;
+            float2 aDiff = a.Right - a.Left;
+            float2 bDiff = b.Right - b.Left;
             float denominator = Determinant(aDiff, bDiff);
             if (denominator == 0) return null; // TODO: test if if-less is faster
-            float aDeterminant = Determinant(a.Left, a.Right);
-            float bDeterminant = Determinant(b.Left, b.Right);
+            float aDeterminant = Determinant(a.Right, a.Left);
+            float bDeterminant = Determinant(b.Right, b.Left);
             return (bDiff * aDeterminant - aDiff * bDeterminant) / denominator;
         }
 
         internal static float2? ProjectFromOrigin(Line line, float2 ray)
         {
-            float2 lineDiff = line.Left - line.Right;
+            float2 lineDiff = line.Right - line.Left;
             float denominator = Determinant(lineDiff, ray);
             if (denominator == 0) return float2.zero;
-            float distance = Determinant(line.Left, line.Right) / denominator;
+            float distance = Determinant(line.Right, line.Left) / denominator;
             return ray * distance;
         }
 
         internal static LineDomain GetDomain(Line line, float2 testPoint) => 
-            Determinant(line.Left - line.Right, line.Left - testPoint) switch
+            Determinant(line.Right - line.Left, line.Right - testPoint) switch
             {
-                < 0 => LineDomain.Bottom,
+                > 0 => LineDomain.Bottom,
                 0 => LineDomain.Line,
-                > 0 => LineDomain.Top,
+                < 0 => LineDomain.Top,
                 _ => throw new ArithmeticException()
             };
 
         internal static RayDomain GetDomain(float2 ray, float2 testPoint) =>
             Determinant(ray, testPoint) switch
             {
-                < 0 => RayDomain.Left,
+                < 0 => RayDomain.Right,
                 0 => RayDomain.Straight,
-                > 0 => RayDomain.Right,
+                > 0 => RayDomain.Left,
                 _ => throw new ArithmeticException()
             };
 
         internal static LineDomain GetOriginDomain(Line line) =>
             // If you take GetDomain method and substitute testPoint with Vector2.zero,
             // in the end you get the following expression:
-            Determinant(line.Left, line.Right) switch
+            Determinant(line.Right, line.Left) switch
             {
-                < 0 => LineDomain.Bottom,
+                > 0 => LineDomain.Bottom,
                 0 => LineDomain.Line,
-                > 0 => LineDomain.Top,
+                < 0 => LineDomain.Top,
                 _ => throw new ArithmeticException()
             };
 
@@ -81,17 +81,17 @@ namespace Backstreets.FOV.Geometry
 
         internal static float? GetDistanceFromOrigin(Line line, float2 ray)
         {
-            float2 lineDiff = line.Left - line.Right;
+            float2 lineDiff = line.Right - line.Left;
             float denominator = Determinant(ray, lineDiff);
             if (denominator == 0) return null;
-            float determinant = Determinant(line.Left, line.Right);
+            float determinant = Determinant(line.Right, line.Left);
             float distance = -determinant / denominator;
             return distance;
         }
 
 
         /// <summary>
-        /// Since <see cref="Line"/> uses left-right notation, to define domains relative to the line
+        /// Since <see cref="Line"/> uses right-left notation, to define domains relative to the line
         /// we use top-bottom notation.
         /// </summary>
         [Flags]
@@ -106,8 +106,8 @@ namespace Backstreets.FOV.Geometry
         internal enum RayDomain
         {
             Straight,
-            Left,
             Right,
+            Left,
         }
     }
 }

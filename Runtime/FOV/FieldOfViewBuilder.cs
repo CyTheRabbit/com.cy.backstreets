@@ -30,9 +30,10 @@ namespace Backstreets.FOV
             FieldOfViewSpace space)
         {
             int shapesCount = shapes.Count;
-            int totalVertexCount = shapes.Sum(shape => shape.Length);
-            BlockingGeometry result = new(totalVertexCount, Allocator.TempJob);
-            NativeArray<float2> source = new(totalVertexCount, Allocator.TempJob);
+            int edgeCount = shapes.Sum(shape => shape.Length);
+            int cornerCount = edgeCount * 2;
+            BlockingGeometry result = new(cornerCount, Allocator.TempJob);
+            NativeArray<float2> source = new(edgeCount, Allocator.TempJob);
             NativeArray<int2> spans = new(shapesCount, Allocator.TempJob);
 
             int nextUnusedOutput = 0;
@@ -65,7 +66,8 @@ namespace Backstreets.FOV
             NativeArray<Corner> orderedCorners = new(corners.Length, Allocator.TempJob);
             LineOfSight lineOfSight = new(capacity: 16);
 
-            FieldOfView result = new(space, corners.Length + 1, Allocator.TempJob);
+            int estimatedBoundsCount = corners.Length / 2 + 2;
+            FieldOfView result = new(space, estimatedBoundsCount, Allocator.TempJob);
 
             JobHandle copyCorners = new CopyArrayJob<Corner>(corners, orderedCorners).Schedule(geometry);
             JobHandle orderCorners = orderedCorners.SortJob(new Corner.CompareByAngle()).Schedule(copyCorners);

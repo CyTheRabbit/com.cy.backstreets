@@ -30,8 +30,8 @@ namespace Backstreets.FOV.Jobs
             triangleIndices[2] = 0;
             foreach (Line bound in fieldOfView.Bounds)
             {
-                triangleVertices[0] = ToWorld(bound.Left);
-                triangleVertices[1] = ToWorld(bound.Right);
+                triangleVertices[0] = ToWorld(bound.Right);
+                triangleVertices[1] = ToWorld(bound.Left);
                 meshData.Vertices.AddRange(triangleVertices);
                 meshData.Indices.AddRange(triangleIndices);
                 triangleIndices[0] += 2;

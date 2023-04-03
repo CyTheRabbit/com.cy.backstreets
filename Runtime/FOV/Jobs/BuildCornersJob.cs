@@ -31,19 +31,26 @@ namespace Backstreets.FOV.Jobs
         {
             int2 slice = spans[spanIndex];
             NativeSlice<float2> source = input.Slice(slice.x, slice.y);
-            NativeSlice<Corner> destination = new(corners, slice.x, slice.y);
+            NativeSlice<Corner> destination = corners.Slice(slice.x * 2, slice.y * 2);
 
-            for (int i = 0; i < source.Length; i++)
+            for (int index = 0; index < source.Length; index++)
             {
-                int prevIndex = Mod(i - 1, source.Length);
-                int nextIndex = Mod(i + 1, source.Length);
-                destination[i] = space.MakeCorner(
-                    vertex: source[i],
-                    prev: source[prevIndex],
-                    next: source[nextIndex]);
+                int nextIndex = Mod(index + 1, source.Length);
+                Line worldLine = new(right: source[index], left: source[nextIndex]);
+                Line localLine = AlignAgainstOrigin(space.WorldToViewport(worldLine));
+
+                destination[index * 2] = new Corner(localLine, Corner.Endpoint.Right);
+                destination[index * 2 + 1] = new Corner(localLine, Corner.Endpoint.Left);
             }
 
             static int Mod(int num, int radix) => num - radix * (int)math.floor((float)num / radix);
         }
+
+        private static Line AlignAgainstOrigin(Line line) =>
+            LineMath.GetOriginDomain(line) switch
+            {
+                LineMath.LineDomain.Top => line.Reverse(),
+                _ => line,
+            };
     }
 }

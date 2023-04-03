@@ -4,7 +4,6 @@ using Unity.Collections;
 using Unity.Jobs;
 using Unity.Mathematics;
 using UnityEngine;
-using static Backstreets.FOV.Geometry.LineMath;
 
 namespace Backstreets.FOV.Jobs
 {
@@ -30,7 +29,7 @@ namespace Backstreets.FOV.Jobs
             {
                 float2 ray =  math.normalize(corner.Position);
                 float2 hit = lineOfSight.Raycast(ray);
-                LineOfSight.UpdateReport report = UpdateLineOfSight(corner);
+                LineOfSight.UpdateReport report = lineOfSight.Update(corner);
                 if (report.ClosestObstacleChanged)
                 {
                     builder.EndSegment(hit);
@@ -41,52 +40,26 @@ namespace Backstreets.FOV.Jobs
             builder.EndSegment(lineOfSight.Raycast(Vector2.left));
         }
 
-        private LineOfSight.UpdateReport UpdateLineOfSight(Corner corner)
-        {
-            LineOfSight.UpdateReport leftReport = UpdateLineOfSight(corner.Position, corner.Left);
-            LineOfSight.UpdateReport rightReport = UpdateLineOfSight(corner.Position, corner.Right);
-            return leftReport + rightReport;
-        }
-
-        private LineOfSight.UpdateReport UpdateLineOfSight(float2 vertex, float2 companion)
-        {
-            RayDomain lineDirection = GetDomain(vertex, companion);
-            bool lineInvisible = lineDirection is RayDomain.Straight;
-            if (lineInvisible) return default;
-
-            bool lineStarts = lineDirection is RayDomain.Right;
-            if (lineStarts)
-            {
-                Line obstacle = new() { Left = vertex, Right = companion };
-                return lineOfSight.AddObstacle(obstacle);
-            }
-            else
-            {
-                Line obstacle = new() { Left = companion, Right = vertex };
-                return lineOfSight.RemoveObstacle(obstacle);
-            }
-        }
-
 
         private ref struct SegmentBuilder
         {
             private NativeList<Line> output;
-            private float2 left;
+            private float2 right;
 
             public SegmentBuilder(NativeList<Line> output)
             {
                 this.output = output;
-                left = float2.zero;
+                right = float2.zero;
             }
 
             internal void StartSegment(float2 start)
             {
-                left = start;
+                right = start;
             }
 
             internal void EndSegment(float2 end)
             {
-                Line segment = new(left, end);
+                Line segment = new(right, end);
                 output.Add(segment);
             }
         }

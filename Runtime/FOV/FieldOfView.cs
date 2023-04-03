@@ -15,14 +15,8 @@ namespace Backstreets.FOV
             Bounds = new NativeList<Line>(boundsCapacity, allocator);
         }
 
-        public void Dispose()
-        {
-            Bounds.Dispose();
-        }
+        public void Dispose() => Bounds.Dispose();
 
-        public JobHandle Dispose(JobHandle inputDeps)
-        {
-            return Bounds.Dispose(inputDeps);
-        }
+        public JobHandle Dispose(JobHandle inputDeps) => Bounds.Dispose(inputDeps);
     }
 }

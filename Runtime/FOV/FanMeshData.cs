@@ -10,10 +10,10 @@ namespace Backstreets.FOV
         internal NativeList<float3> Vertices;
         internal NativeList<int> Indices;
 
-        public FanMeshData(int segmentCount, Allocator allocator)
+        public FanMeshData(int lineCount, Allocator allocator)
         {
-            Vertices = new NativeList<float3>(segmentCount * 2 + 1, allocator);
-            Indices = new NativeList<int>(segmentCount * 3, allocator);
+            Vertices = new NativeList<float3>(lineCount * 2 + 1, allocator);
+            Indices = new NativeList<int>(lineCount * 3, allocator);
         }
 
         public void Apply(Mesh mesh, int submesh = 0)
@@ -29,11 +29,8 @@ namespace Backstreets.FOV
             Indices.Dispose();
         }
 
-        public JobHandle Dispose(JobHandle inputDeps)
-        {
-            return JobHandle.CombineDependencies(
-                Vertices.Dispose(inputDeps),
-                Indices.Dispose(inputDeps));
-        }
+        public JobHandle Dispose(JobHandle inputDeps) => JobHandle.CombineDependencies(
+            Vertices.Dispose(inputDeps),
+            Indices.Dispose(inputDeps));
     }
 }

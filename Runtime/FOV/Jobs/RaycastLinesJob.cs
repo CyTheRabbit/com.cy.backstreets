@@ -1,11 +1,8 @@
-using System;
 using Backstreets.FOV.Geometry;
 using Unity.Burst;
 using Unity.Collections;
 using Unity.Jobs;
 using Unity.Mathematics;
-using UnityEngine;
-using static Backstreets.FOV.Geometry.LineMath;
 
 namespace Backstreets.FOV.Jobs
 {
@@ -27,30 +24,21 @@ namespace Backstreets.FOV.Jobs
         {
             foreach (Corner corner in corners)
             {
-                Line obstacle = Align(corner.Position, corner.Right);
-                if (IsHit(obstacle))
+                // each line has two corners, therefore it occurs twice in the corners list.
+                bool isLineStart = corner.End == Corner.Endpoint.Right;
+                if (isLineStart && IsHit(corner.Line))
                 {
-                    hits.AddObstacle(obstacle);
+                    hits.AddObstacle(corner.Line);
                 }
             }
         }
 
         private bool IsHit(Line obstacle)
         {
-            float leftAngle = Vector2.SignedAngle(ray, obstacle.Left);
-            float rightAngle = Vector2.SignedAngle(ray, obstacle.Right);
-            return Math.Sign(leftAngle) != Math.Sign(rightAngle)
-                   && rightAngle != 0 // Line ends at ray
-                   && Math.Abs(rightAngle - leftAngle) < 180;
+            LineMath.RayDomain rightDomain = LineMath.GetDomain(ray, obstacle.Right);
+            LineMath.RayDomain leftDomain = LineMath.GetDomain(ray, obstacle.Left);
+            return rightDomain is LineMath.RayDomain.Right or LineMath.RayDomain.Straight
+                   && leftDomain is LineMath.RayDomain.Left;
         }
-
-        private static Line Align(float2 x, float2 y) =>
-            GetDomain(x, y) switch
-            {
-                RayDomain.Straight => new Line(x, y),
-                RayDomain.Left => new Line(y, x),
-                RayDomain.Right => new Line(x, y),
-                _ => throw new ArgumentOutOfRangeException()
-            };
     }
 }

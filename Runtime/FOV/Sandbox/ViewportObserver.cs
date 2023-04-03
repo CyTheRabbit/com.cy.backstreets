@@ -25,11 +25,10 @@ namespace Backstreets.FOV.Sandbox
         private void RebuildFieldOfViewMesh()
         {
             float2 origin = ((float3)transform.position).xy;
-            int totalVertexCount = obstacles.Sum(obstacle => obstacle.Vertices.Length);
             float2[][] shapes = obstacles.Select(obstacle => obstacle.Vertices).ToArray();
 
             using JobPromise<FieldOfView> fieldOfView = FieldOfViewBuilder.Build(origin, shapes);
-            using JobPromise<FanMeshData> buildMesh = ScheduleMeshGeneration(fieldOfView, totalVertexCount);
+            using JobPromise<FanMeshData> buildMesh = ScheduleMeshGeneration(fieldOfView);
 
             FanMeshData meshData = buildMesh.Complete();
 
@@ -46,11 +45,10 @@ namespace Backstreets.FOV.Sandbox
         }
 
 
-        private static JobPromise<FanMeshData> ScheduleMeshGeneration(
-            in JobPromise<FieldOfView> fieldOfView,
-            int vertexCount)
+        private static JobPromise<FanMeshData> ScheduleMeshGeneration(in JobPromise<FieldOfView> fieldOfView)
         {
-            FanMeshData meshData = new(vertexCount, Allocator.TempJob);
+            int estimatedLineCount = fieldOfView.Result.Bounds.Capacity;
+            FanMeshData meshData = new(estimatedLineCount, Allocator.TempJob);
             BuildTriangleFanJob job = new(fieldOfView.Result, meshData);
             return new JobPromise<FanMeshData>(job.Schedule(fieldOfView.Handle), meshData);
         }

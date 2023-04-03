@@ -8,7 +8,7 @@ using static Backstreets.FOV.Geometry.LineMath;
 namespace Backstreets.FOV.Geometry
 {
     [BurstCompatible]
-    public struct LineOfSight : INativeDisposable
+    internal struct LineOfSight : INativeDisposable
     {
         // It might be more efficient to use a linked list.
         private NativeList<Line> obstacles;
@@ -25,6 +25,19 @@ namespace Backstreets.FOV.Geometry
             if (obstacles.IsEmpty) return default;
             Line obstacle = obstacles[0];
             return ProjectFromOrigin(obstacle, ray) ?? throw new Exception();
+        }
+
+        public UpdateReport Update(Corner corner)
+        {
+            bool isPerpendicularToOrigin = GetOriginDomain(corner.Line) is LineDomain.Line;
+            if (isPerpendicularToOrigin) return default;
+
+            return corner.End switch
+            {
+                Corner.Endpoint.Right => AddObstacle(corner.Line),
+                Corner.Endpoint.Left => RemoveObstacle(corner.Line),
+                _ => throw new ArgumentOutOfRangeException()
+            };
         }
 
         public UpdateReport AddObstacle(Line insert)
@@ -76,9 +89,9 @@ namespace Backstreets.FOV.Geometry
 
                 static int? SolveFor(Line main, Line other)
                 {
-                    LineDomain leftDomain = GetDomain(main, other.Left);
                     LineDomain rightDomain = GetDomain(main, other.Right);
-                    LineDomain otherDomain = Combine(leftDomain, rightDomain);
+                    LineDomain leftDomain = GetDomain(main, other.Left);
+                    LineDomain otherDomain = Combine(rightDomain, leftDomain);
                     LineDomain originDomain = GetOriginDomain(main);
                     return otherDomain switch
                     {
