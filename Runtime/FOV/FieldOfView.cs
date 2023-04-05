@@ -8,15 +8,30 @@ namespace Backstreets.FOV
     {
         internal FieldOfViewSpace Space;
         internal NativeList<Line> Bounds;
+        internal NativeList<Line> ConflictingBounds;
 
         internal FieldOfView(FieldOfViewSpace space, int boundsCapacity, Allocator allocator)
         {
             Space = space;
             Bounds = new NativeList<Line>(boundsCapacity, allocator);
+            ConflictingBounds = new NativeList<Line>(allocator);
         }
 
-        public void Dispose() => Bounds.Dispose();
+        public bool IsCreated => Bounds.IsCreated && ConflictingBounds.IsCreated;
 
-        public JobHandle Dispose(JobHandle inputDeps) => Bounds.Dispose(inputDeps);
+        public void Dispose()
+        {
+            if (!IsCreated) return;
+            Bounds.Dispose();
+            ConflictingBounds.Dispose();
+        }
+
+        public JobHandle Dispose(JobHandle inputDeps)
+        {
+            if (!IsCreated) return default;
+            return JobHandle.CombineDependencies(
+                Bounds.Dispose(inputDeps),
+                ConflictingBounds.Dispose(inputDeps));
+        }
     }
 }

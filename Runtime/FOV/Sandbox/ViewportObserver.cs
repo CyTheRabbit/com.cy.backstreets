@@ -1,5 +1,6 @@
 using System;
 using System.Linq;
+using Backstreets.FOV.Geometry;
 using Backstreets.FOV.Jobs;
 using Unity.Collections;
 using Unity.Jobs;
@@ -36,6 +37,8 @@ namespace Backstreets.FOV.Sandbox
             ReinitializeMesh();
             meshData.Apply(mesh);
             FanMeshColoring.SetColor(mesh, palette);
+            
+            DrawConflictingBounds(fieldOfView.Result);
         }
 
         private void ReinitializeMesh()
@@ -65,6 +68,26 @@ namespace Backstreets.FOV.Sandbox
             cmd.SetGlobalFloat("_HandleSize", 1);
             cmd.DrawMesh(mesh, Gizmos.matrix, HandleUtility.handleMaterial, 0, 0);
             Graphics.ExecuteCommandBuffer(cmd);
+        }
+
+        private static void DrawConflictingBounds(FieldOfView fieldOfView)
+        {
+            using Handles.DrawingScope scope = new(Color.red);
+
+            FieldOfViewSpace space = fieldOfView.Space;
+            foreach (Line bound in fieldOfView.ConflictingBounds)
+            {
+                float2 a = space.ViewportToWorld(bound.Right);
+                float2 b = space.ViewportToWorld(bound.Left);
+                DrawLine(a, b, thickness: 5);
+            }
+
+            void DrawLine(float2 a, float2 b, float thickness)
+            {
+                Vector3 a3D = new(a.x, a.y, 0);
+                Vector3 b3D = new(b.x, b.y, 0);
+                Handles.DrawLine(a3D, b3D, thickness);
+            }
         }
 
         private static FanMeshColoring.Palette DefaultPalette =>

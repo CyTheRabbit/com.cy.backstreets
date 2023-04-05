@@ -63,10 +63,9 @@ namespace Backstreets.FOV
             in JobPromise<BlockingGeometry> geometry,
             FieldOfViewSpace space)
         {
-
             int estimatedBoundsCount = geometry.Result.Corners.Length / 2 + 1;
             FieldOfView result = new(space, estimatedBoundsCount, Allocator.TempJob);
-            FieldOfViewBuilderVisitor builder = new(result.Bounds);
+            FieldOfViewBuilderVisitor builder = new(result);
 
             JobHandle buildBounds = SweepLineOfSight(builder, geometry);
 

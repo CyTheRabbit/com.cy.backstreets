@@ -71,7 +71,7 @@ namespace Backstreets.FOV.Geometry
         public UpdateReport RemoveObstacle(Line obstacle)
         {
             int index = obstacles.IndexOf(obstacle);
-            if (index < 0) throw new ArgumentOutOfRangeException();
+            if (index < 0) return new UpdateReport { OperationFailed = true };
 
             obstacles.RemoveAt(index);
             return new UpdateReport
@@ -110,12 +110,14 @@ namespace Backstreets.FOV.Geometry
         public struct UpdateReport
         {
             public bool ClosestObstacleChanged;
+            public bool OperationFailed;
 
 
             public static UpdateReport operator +(UpdateReport x, UpdateReport y) =>
                 new()
                 {
                     ClosestObstacleChanged = x.ClosestObstacleChanged || y.ClosestObstacleChanged,
+                    OperationFailed = x.OperationFailed || y.OperationFailed,
                 };
         }
     }

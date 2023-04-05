@@ -14,6 +14,13 @@ namespace Backstreets.FOV.Geometry
             return distance < math.EPSILON ? 0 : math.degrees(math.acos(point.x / distance)) * sign;
         }
 
+        internal static float2 Ray(float angle)
+        {
+            double radians = math.radians((double)angle);
+            double2 rayDouble = new(math.cos(radians), math.sin(radians));
+            return new float2(rayDouble);
+        }
+
         internal static float2? GetIntersection(Line a, Line b)
         {
             float2 aDiff = a.Right - a.Left;
@@ -108,6 +115,13 @@ namespace Backstreets.FOV.Geometry
             Straight,
             Right,
             Left,
+        }
+
+        public static float NormalizeAngle(float angle)
+        {
+            float positiveAngle = angle + 180; // angle in range 0..360
+            float positiveNormalized = positiveAngle - math.floor(positiveAngle / 360) * 360;
+            return positiveNormalized - 180;
         }
     }
 }

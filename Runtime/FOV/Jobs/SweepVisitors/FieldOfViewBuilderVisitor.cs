@@ -6,12 +6,12 @@ namespace Backstreets.FOV.Jobs.SweepVisitors
     [BurstCompatible]
     internal struct FieldOfViewBuilderVisitor : ILineOfSightVisitor
     {
-        [WriteOnly] private NativeList<Line> bounds;
+        [WriteOnly] private FieldOfView fieldOfView;
         private Line currentBound;
 
-        public FieldOfViewBuilderVisitor(NativeList<Line> bounds)
+        public FieldOfViewBuilderVisitor(FieldOfView fieldOfView)
         {
-            this.bounds = bounds;
+            this.fieldOfView = fieldOfView;
             currentBound = default;
         }
 
@@ -27,11 +27,15 @@ namespace Backstreets.FOV.Jobs.SweepVisitors
             currentBound.Left = lineOfSight.Raycast();
         }
 
-        public void Update(in LineOfSight lineOfSight, LineOfSight.UpdateReport update)
+        public void Update(in LineOfSight lineOfSight, LineOfSight.UpdateReport update, Corner corner)
         {
-            if (update.ClosestObstacleChanged)
+            if (update.OperationFailed)
             {
-                bounds.Add(currentBound);
+                fieldOfView.ConflictingBounds.Add(corner.Line);
+            }
+            else if (update.ClosestObstacleChanged)
+            {
+                fieldOfView.Bounds.Add(currentBound);
                 currentBound = new Line(right: lineOfSight.Raycast(), left: default);
             }
         }
@@ -39,7 +43,7 @@ namespace Backstreets.FOV.Jobs.SweepVisitors
         public void End(in LineOfSight lineOfSight)
         {
             currentBound.Left = lineOfSight.Raycast();
-            bounds.Add(currentBound);
+            fieldOfView.Bounds.Add(currentBound);
         }
     }
 }
