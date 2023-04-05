@@ -3,10 +3,10 @@ using System.Linq;
 using Backstreets.FOV.Geometry;
 using Backstreets.FOV.Jobs;
 using Backstreets.FOV.Jobs.SweepVisitors;
+using Backstreets.FOV.Utility;
 using Unity.Collections;
 using Unity.Jobs;
 using Unity.Mathematics;
-using UnityEngine;
 
 namespace Backstreets.FOV
 {
@@ -77,18 +77,25 @@ namespace Backstreets.FOV
         {
             NativeArray<Corner> corners = geometry.Result.Corners;
             NativeArray<Corner> orderedCorners = new(corners.Length, Allocator.TempJob);
+            NativeReference<IndexRange> indexRange = new(Allocator.TempJob);
             LineOfSight lineOfSight = new(capacity: 16);
 
             JobHandle copyCorners = new CopyArrayJob<Corner>(corners, orderedCorners).Schedule(geometry);
             JobHandle orderCorners = orderedCorners.SortJob(new Corner.CompareByAngle()).Schedule(copyCorners);
-            JobHandle prepareStartingLineOfSight = new RaycastLinesJob<T>(corners, Vector2.left, lineOfSight, visitor).Schedule(geometry);
-            JobHandle preparationJobs = JobHandle.CombineDependencies(prepareStartingLineOfSight, orderCorners);
+            JobHandle narrowIndexRange = 
+                new GetCornerRangeJob(orderedCorners, indexRange, visitor.RightLimit, visitor.LeftLimit)
+                    .Schedule(orderCorners);
+            JobHandle prepareStartingLineOfSight =
+                new RaycastLinesJob<T>(corners, LineMath.Ray(visitor.RightLimit), lineOfSight, visitor)
+                    .Schedule(geometry);
+            JobHandle preparationJobs = JobHandle.CombineDependencies(prepareStartingLineOfSight, narrowIndexRange);
 
-            JobHandle sweep = new SweepLineOfSightJob<T>(lineOfSight, orderedCorners, visitor).Schedule(preparationJobs);
+            JobHandle sweep = new SweepLineOfSightJob<T>(lineOfSight, orderedCorners, indexRange, visitor).Schedule(preparationJobs);
 
             { // Cleanup
                 orderedCorners.Dispose(sweep);
                 lineOfSight.Dispose(sweep);
+                indexRange.Dispose(sweep);
             }
 
             return sweep;

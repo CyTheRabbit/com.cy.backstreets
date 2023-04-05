@@ -15,6 +15,8 @@ namespace Backstreets.FOV.Jobs.SweepVisitors
             currentBound = default;
         }
 
+        public float RightLimit => -180;
+        public float LeftLimit => 180;
         public bool ShouldProcess(Line line) => true;
 
         public void Start(in LineOfSight lineOfSight)

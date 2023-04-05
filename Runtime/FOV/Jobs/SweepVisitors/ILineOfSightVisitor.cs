@@ -4,6 +4,8 @@ namespace Backstreets.FOV.Jobs
 {
     internal interface ILineOfSightVisitor
     {
+        float RightLimit { get; }
+        float LeftLimit { get; }
         bool ShouldProcess(Line line);
         void Start(in LineOfSight lineOfSight);
         void PreUpdate(in LineOfSight lineOfSight);
