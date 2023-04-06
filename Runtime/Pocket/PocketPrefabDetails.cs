@@ -8,11 +8,11 @@ namespace Backstreets.Pocket
 {
     public class PocketPrefabDetails : MonoBehaviour
     {
-        [SerializeField] private string _pocketID;
+        [SerializeField] private int pocketID;
         [SerializeField] private PortalData[] _portals = Array.Empty<PortalData>();
         [SerializeField] private Bounds pocketBounds = default;
 
-        public string PocketID => _pocketID;
+        public PocketID PocketID => new(pocketID);
 
         public PortalData[] Portals => _portals;
 

@@ -1,5 +1,6 @@
 using System;
 using System.Linq;
+using Backstreets.Data;
 using Backstreets.FOV.Geometry;
 using Backstreets.FOV.Jobs;
 using Unity.Collections;
@@ -15,7 +16,9 @@ namespace Backstreets.FOV.Sandbox
     {
         [SerializeField] private ViewportObstacle[] obstacles = Array.Empty<ViewportObstacle>();
         [SerializeField] private FanMeshColoring.Palette palette = DefaultPalette;
+        [SerializeField] private int pocketID;
         private Mesh mesh;
+        private FieldOfViewBuilder builder;
 
         public void OnDrawGizmos()
         {
@@ -25,11 +28,14 @@ namespace Backstreets.FOV.Sandbox
 
         private void RebuildFieldOfViewMesh()
         {
+            builder ??= new FieldOfViewBuilder(new SceneGeometrySource(gameObject.scene));
+            
             float2 origin = ((float3)transform.position).xy;
             float2[][] shapes = obstacles.Select(obstacle => obstacle.Vertices).ToArray();
             int totalEdgeCount = shapes.Sum(shape => shape.Length);
 
-            using JobPromise<FieldOfView> fieldOfView = FieldOfViewBuilder.Build(origin, shapes);
+            builder.SetOrigin(origin, new PocketID(pocketID));
+            using JobPromise<FieldOfView> fieldOfView = builder.Build(Allocator.TempJob);
             using JobPromise<FanMeshData> buildMesh = ScheduleMeshGeneration(fieldOfView, totalEdgeCount);
 
             FanMeshData meshData = buildMesh.Complete();
