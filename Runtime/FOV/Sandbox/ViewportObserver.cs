@@ -38,7 +38,7 @@ namespace Backstreets.FOV.Sandbox
             using JobPromise<FieldOfView> fieldOfView = builder.Build(Allocator.TempJob);
             using JobPromise<FanMeshData> buildMesh = ScheduleMeshGeneration(fieldOfView, totalEdgeCount);
 
-            FanMeshData meshData = buildMesh.Complete();
+            using FanMeshData meshData = buildMesh.Complete();
 
             ReinitializeMesh();
             meshData.Apply(mesh);
