@@ -160,7 +160,6 @@ namespace Backstreets.FOV.Jobs
                 (int Index, float Angle) leftBest = (0, -180);
                 for (int i = 0; i < orderedCorners.Length; i++)
                 {
-
                     float angle = orderedCorners[i].Angle;
                     if (angle > rightLimit && angle < rightBest.Angle) rightBest = (Index: i, Angle: angle);
                     if (angle <= leftLimit && angle >= leftBest.Angle) leftBest = (Index: i, Angle: angle);
