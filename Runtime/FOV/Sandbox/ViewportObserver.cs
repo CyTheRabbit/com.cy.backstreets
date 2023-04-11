@@ -35,16 +35,17 @@ namespace Backstreets.FOV.Sandbox
             int totalEdgeCount = shapes.Sum(shape => shape.Length);
 
             builder.SetOrigin(origin, new PocketID(pocketID));
-            using JobPromise<FieldOfView> fieldOfView = builder.Build(Allocator.TempJob);
-            using JobPromise<FanMeshData> buildMesh = ScheduleMeshGeneration(in fieldOfView, totalEdgeCount);
+            using JobPromise<FieldOfView> buildFOV = builder.Build(Allocator.TempJob);
+            using JobPromise<FanMeshData> buildMesh = ScheduleMeshGeneration(in buildFOV, totalEdgeCount);
 
+            using FieldOfView fieldOfView = buildFOV.Complete();
             using FanMeshData meshData = buildMesh.Complete();
 
             ReinitializeMesh();
             meshData.Apply(mesh);
             FanMeshColoring.SetColor(mesh, palette);
             
-            DrawConflictingBounds(fieldOfView.Result);
+            DrawConflictingBounds(fieldOfView);
         }
 
         private void ReinitializeMesh()
