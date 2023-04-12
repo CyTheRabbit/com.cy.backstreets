@@ -8,9 +8,10 @@ namespace Backstreets.FOV.Geometry
     [DebuggerDisplay("({End}, {Angle}) {Line}")]
     internal struct Corner
     {
-        public Corner(Line line, Endpoint end)
+        public Corner(Line line, int lineIndex, Endpoint end)
         {
             Line = line;
+            LineIndex = lineIndex;
             End = end;
             Angle = LineMath.Angle(end switch
             {
@@ -21,6 +22,7 @@ namespace Backstreets.FOV.Geometry
         }
 
         public Line Line;
+        public int LineIndex;
         public float Angle; // TODO: Test if tangent suits better than angle
         public Endpoint End;
 

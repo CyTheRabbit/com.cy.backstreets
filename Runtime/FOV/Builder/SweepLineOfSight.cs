@@ -120,7 +120,7 @@ namespace Backstreets.FOV.Jobs
 
                     if (IsHit(corner.Line))
                     {
-                        lineOfSight.AddObstacle(corner.Line);
+                        lineOfSight.AddObstacle(corner.Line, corner.LineIndex);
                     }
                 }
             }

@@ -11,20 +11,21 @@ namespace Backstreets.FOV.Geometry
     internal struct LineOfSight : INativeDisposable
     {
         private NativeList<Line> obstacles; // It might be more efficient to use a linked list.
+        private NativeList<int> obstacleIds;
         private float2 ray;
 
         public LineOfSight(int capacity)
         {
             obstacles = new NativeList<Line>(capacity, Allocator.TempJob);
+            obstacleIds = new NativeList<int>(capacity, Allocator.TempJob);
             ray = default;
         }
 
-        public readonly float2 Raycast()
-        {
-            if (obstacles.IsEmpty) return default;
-            Line obstacle = obstacles[0];
-            return ProjectFromOrigin(obstacle, ray) ?? throw new Exception();
-        }
+        public readonly float2 Raycast() =>
+            obstacles.IsEmpty ? default : ProjectFromOrigin(obstacles[0], ray) ?? throw new Exception();
+
+        public readonly int RaycastId() => 
+            obstacleIds.IsEmpty ? InvalidEdgeID : obstacleIds[0];
 
         public void LookAt(float2 direction) => ray = direction;
 
@@ -37,13 +38,13 @@ namespace Backstreets.FOV.Geometry
 
             return corner.End switch
             {
-                Corner.Endpoint.Right => AddObstacle(corner.Line),
-                Corner.Endpoint.Left => RemoveObstacle(corner.Line),
+                Corner.Endpoint.Right => AddObstacle(corner.Line, corner.LineIndex),
+                Corner.Endpoint.Left => RemoveObstacle(corner.LineIndex),
                 _ => throw new ArgumentOutOfRangeException()
             };
         }
 
-        public UpdateReport AddObstacle(Line insert)
+        public UpdateReport AddObstacle(Line insert, int id)
         {
             CompareObstacleDistance comparer = new();
             int insertIndex;
@@ -54,12 +55,11 @@ namespace Backstreets.FOV.Geometry
 
             if (insertIndex == obstacles.Length)
             {
-                obstacles.Add(insert);
+                AppendObstacle(insert, id);
             }
             else
             {
-                obstacles.InsertRangeWithBeginEnd(insertIndex, insertIndex + 1);
-                obstacles[insertIndex] = insert;
+                InsertObstacle(insert, id, insertIndex);
             }
 
             return new UpdateReport
@@ -68,21 +68,50 @@ namespace Backstreets.FOV.Geometry
             };
         }
 
-        public UpdateReport RemoveObstacle(Line obstacle)
+        public UpdateReport RemoveObstacle(int id)
         {
-            int index = obstacles.IndexOf(obstacle);
+            int index = obstacleIds.IndexOf(id);
             if (index < 0) return new UpdateReport { OperationFailed = true };
 
-            obstacles.RemoveAt(index);
+            RemoveObstacleAtIndex(index);
             return new UpdateReport
             {
                 ClosestObstacleChanged = index == 0
             };
         }
 
-        public void Dispose() => obstacles.Dispose();
+        public void Dispose()
+        {
+            obstacles.Dispose();
+            obstacleIds.Dispose();
+        }
 
-        public JobHandle Dispose(JobHandle inputDeps) => obstacles.Dispose(inputDeps);
+        public JobHandle Dispose(JobHandle inputDeps) => JobHandle.CombineDependencies(
+            obstacles.Dispose(inputDeps),
+            obstacleIds.Dispose(inputDeps));
+
+        private void AppendObstacle(Line insert, int id)
+        {
+            obstacles.Add(insert);
+            obstacleIds.Add(id);
+        }
+
+        private void InsertObstacle(Line insert, int id, int insertIndex)
+        {
+            obstacles.InsertRangeWithBeginEnd(insertIndex, insertIndex + 1);
+            obstacles[insertIndex] = insert;
+            obstacleIds.InsertRangeWithBeginEnd(insertIndex, insertIndex + 1);
+            obstacleIds[insertIndex] = id;
+        }
+
+        private void RemoveObstacleAtIndex(int index)
+        {
+            obstacles.RemoveAt(index);
+            obstacleIds.RemoveAt(index);
+        }
+
+
+        private const int InvalidEdgeID = -1;
 
 
         private readonly struct CompareObstacleDistance : IComparer<Line>

@@ -2,6 +2,7 @@ using System.Diagnostics.CodeAnalysis;
 using Backstreets.FOV.Geometry;
 using Unity.Burst;
 using Unity.Collections;
+using Unity.Collections.LowLevel.Unsafe;
 using Unity.Jobs;
 
 namespace Backstreets.FOV.Jobs
@@ -16,7 +17,7 @@ namespace Backstreets.FOV.Jobs
         {
             this.lines = lines;
             this.space = space;
-            this.corners = corners.Reinterpret<CornerPair>(CornerSize);
+            this.corners = corners.Reinterpret<CornerPair>(UnsafeUtility.SizeOf<Corner>());
         }
 
         [ReadOnly] private readonly NativeArray<Line> lines;
@@ -27,7 +28,7 @@ namespace Backstreets.FOV.Jobs
         {
             Line worldLine = lines[index];
             Line localLine = AlignAgainstOrigin(space.WorldToViewport(worldLine));
-            corners[index] = new CornerPair(localLine);
+            corners[index] = new CornerPair(localLine, index);
         }
 
         private static Line AlignAgainstOrigin(Line line) =>
@@ -36,8 +37,6 @@ namespace Backstreets.FOV.Jobs
                 LineMath.LineDomain.Top => line.Reverse(),
                 _ => line,
             };
-
-        private const int CornerSize = 16 + 4 + 4;
         
         [BurstCompatible]
         [SuppressMessage("ReSharper", "NotAccessedField.Local", 
@@ -47,10 +46,10 @@ namespace Backstreets.FOV.Jobs
             private readonly Corner right;
             private readonly Corner left;
 
-            public CornerPair(Line line)
+            public CornerPair(Line line, int index)
             {
-                right = new Corner(line, Corner.Endpoint.Right);
-                left = new Corner(line, Corner.Endpoint.Left);
+                right = new Corner(line, index, Corner.Endpoint.Right);
+                left = new Corner(line, index, Corner.Endpoint.Left);
             }
         }
     }
