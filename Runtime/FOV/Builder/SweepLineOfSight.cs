@@ -1,4 +1,5 @@
 using Backstreets.FOV.Geometry;
+using Backstreets.FOV.Jobs.SweepRecorders;
 using Backstreets.FOV.Utility;
 using Unity.Burst;
 using Unity.Collections;
@@ -7,9 +8,9 @@ using Unity.Mathematics;
 
 namespace Backstreets.FOV.Jobs
 {
-    internal static class SweepLineOfSight<TVisitor> where TVisitor : struct, ILineOfSightVisitor
+    internal static class SweepLineOfSight<TRecorder> where TRecorder : struct, ISweepRecorder
     {
-        internal static JobHandle Sweep(TVisitor visitor, in JobPromise<BlockingGeometry> geometry)
+        internal static JobHandle Sweep(TRecorder recorder, in JobPromise<BlockingGeometry> geometry)
         {
             NativeArray<Corner> corners = geometry.Result.Corners;
             NativeArray<Corner> orderedCorners = new(corners.Length, Allocator.TempJob);
@@ -19,14 +20,14 @@ namespace Backstreets.FOV.Jobs
             JobHandle copyCorners = new CopyArrayJob<Corner>(corners, orderedCorners).Schedule(geometry);
             JobHandle orderCorners = orderedCorners.SortJob(new Corner.CompareByAngle()).Schedule(copyCorners);
             JobHandle narrowIndexRange =
-                new GetIndexRangeJob(orderedCorners, indexRange, visitor.RightLimit, visitor.LeftLimit)
+                new GetIndexRangeJob(orderedCorners, indexRange, recorder.RightLimit, recorder.LeftLimit)
                     .Schedule(orderCorners);
             JobHandle prepareStartingLineOfSight =
-                new RaycastEdgesJob(visitor, corners, LineMath.Ray(visitor.RightLimit), lineOfSight)
+                new RaycastEdgesJob(recorder, corners, LineMath.Ray(recorder.RightLimit), lineOfSight)
                     .Schedule(geometry);
             JobHandle preparationJobs = JobHandle.CombineDependencies(prepareStartingLineOfSight, narrowIndexRange);
 
-            JobHandle sweep = new SweepJob(visitor, lineOfSight, orderedCorners, indexRange)
+            JobHandle sweep = new SweepJob(recorder, lineOfSight, orderedCorners, indexRange)
                 .Schedule(preparationJobs);
 
             {
@@ -44,26 +45,26 @@ namespace Backstreets.FOV.Jobs
         private struct SweepJob : IJob
         {
             public SweepJob(
-                TVisitor visitor,
+                TRecorder recorder,
                 LineOfSight lineOfSight,
                 NativeArray<Corner> corners,
                 NativeReference<IndexRange> indexRange)
             {
-                this.visitor = visitor;
+                this.recorder = recorder;
                 this.lineOfSight = lineOfSight;
                 this.corners = corners;
                 this.indexRange = indexRange;
             }
 
-            private TVisitor visitor;
+            private TRecorder recorder;
             private LineOfSight lineOfSight;
             [ReadOnly] private readonly NativeReference<IndexRange> indexRange;
             [ReadOnly] private readonly NativeArray<Corner> corners;
     
             public void Execute()
             {
-                lineOfSight.LookAt(LineMath.Ray(visitor.RightLimit));
-                visitor.Start(in lineOfSight);
+                lineOfSight.LookAt(LineMath.Ray(recorder.RightLimit));
+                recorder.Start(in lineOfSight);
 
                 IndexRange range = indexRange.Value;
                 if (range.Length >= 0)
@@ -76,20 +77,20 @@ namespace Backstreets.FOV.Jobs
                     SweepRange(new IndexRange(0, range.End));
                 }
     
-                lineOfSight.LookAt(LineMath.Ray(visitor.LeftLimit));
-                visitor.End(in lineOfSight);
+                lineOfSight.LookAt(LineMath.Ray(recorder.LeftLimit));
+                recorder.End(in lineOfSight);
             }
     
             private void SweepRange(IndexRange range)
             {
                 foreach (Corner corner in corners.Slice(range.Start, range.Length))
                 {
-                    if (!visitor.ShouldProcess(corner.Edge)) continue;
+                    if (!recorder.ShouldProcess(corner.Edge)) continue;
     
                     lineOfSight.LookAt(corner);
-                    visitor.PreUpdate(in lineOfSight);
+                    recorder.PreUpdate(in lineOfSight);
                     LineOfSight.UpdateReport update = lineOfSight.Update(corner);
-                    visitor.Update(in lineOfSight, update, corner);
+                    recorder.Record(in lineOfSight, update, corner);
                 }
             }
         }
@@ -97,15 +98,15 @@ namespace Backstreets.FOV.Jobs
         [BurstCompile]
         private struct RaycastEdgesJob : IJob
         {
-            public RaycastEdgesJob(TVisitor visitor, NativeArray<Corner> corners, float2 ray, LineOfSight lineOfSight)
+            public RaycastEdgesJob(TRecorder recorder, NativeArray<Corner> corners, float2 ray, LineOfSight lineOfSight)
             {
-                this.visitor = visitor;
+                this.recorder = recorder;
                 this.corners = corners;
                 this.ray = ray;
                 this.lineOfSight = lineOfSight;
             }
 
-            private TVisitor visitor;
+            private TRecorder recorder;
             [ReadOnly] private readonly NativeArray<Corner> corners; // array may be unordered, since this job tests every element.
             [ReadOnly] private readonly float2 ray;
             private LineOfSight lineOfSight;
@@ -116,7 +117,7 @@ namespace Backstreets.FOV.Jobs
                 {
                     // each line has two corners, therefore it occurs twice in the corners list.
                     if (corner.End == Corner.Endpoint.Left) continue;
-                    if (!visitor.ShouldProcess(corner.Edge)) continue;
+                    if (!recorder.ShouldProcess(corner.Edge)) continue;
 
                     if (IsHit(corner.Edge))
                     {

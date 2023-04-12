@@ -1,7 +1,7 @@
 using Backstreets.Data;
 using Backstreets.FOV.Geometry;
 using Backstreets.FOV.Jobs;
-using Backstreets.FOV.Jobs.SweepVisitors;
+using Backstreets.FOV.Jobs.SweepRecorders;
 using Unity.Collections;
 using Unity.Jobs;
 using Unity.Mathematics;
@@ -57,9 +57,9 @@ namespace Backstreets.FOV
         {
             int estimatedBoundsCount = geometry.Result.Corners.Length / 2 + 1;
             FieldOfView result = new(space, estimatedBoundsCount, outputAllocator);
-            FieldOfViewBuilderVisitor builder = new(result);
+            FieldOfViewRecorder recorder = new(result);
 
-            JobHandle buildBounds = SweepLineOfSight<FieldOfViewBuilderVisitor>.Sweep(builder, in geometry);
+            JobHandle buildBounds = SweepLineOfSight<FieldOfViewRecorder>.Sweep(recorder, in geometry);
 
             return new JobPromise<FieldOfView>(buildBounds, result);
         }
