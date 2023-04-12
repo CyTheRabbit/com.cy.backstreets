@@ -5,31 +5,31 @@ using Unity.Mathematics;
 
 namespace Backstreets.FOV.Geometry
 {
-    [DebuggerDisplay("({End}, {Angle}) {Line}")]
+    [DebuggerDisplay("({End}, {Angle}) {Edge}")]
     internal struct Corner
     {
-        public Corner(Line line, int lineIndex, Endpoint end)
+        public Corner(Line edge, int edgeIndex, Endpoint end)
         {
-            Line = line;
-            LineIndex = lineIndex;
+            Edge = edge;
+            EdgeIndex = edgeIndex;
             End = end;
             Angle = LineMath.Angle(end switch
             {
-                Endpoint.Right => line.Right,
-                Endpoint.Left => line.Left,
+                Endpoint.Right => edge.Right,
+                Endpoint.Left => edge.Left,
                 _ => throw new ArgumentOutOfRangeException(nameof(end), end, null)
             });
         }
 
-        public Line Line;
-        public int LineIndex;
+        public Line Edge;
+        public int EdgeIndex;
         public float Angle; // TODO: Test if tangent suits better than angle
         public Endpoint End;
 
         public readonly float2 Position => End switch
         {
-            Endpoint.Right => Line.Right,
-            Endpoint.Left => Line.Left,
+            Endpoint.Right => Edge.Right,
+            Endpoint.Left => Edge.Left,
             _ => throw new ArgumentOutOfRangeException()
         };
 

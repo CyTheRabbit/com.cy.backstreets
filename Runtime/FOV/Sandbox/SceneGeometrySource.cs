@@ -7,6 +7,7 @@ using Backstreets.FOV.Utility;
 using Backstreets.Pocket;
 using Unity.Burst;
 using Unity.Collections;
+using Unity.Collections.LowLevel.Unsafe;
 using Unity.Jobs;
 using Unity.Mathematics;
 using UnityEngine.SceneManagement;
@@ -46,7 +47,7 @@ namespace Backstreets.FOV.Sandbox
             }
 
             PocketGeometry result = new(edgesCount);
-            JobHandle makeEdges = new MakeEdgesJob(vertices, shapeRanges, result.Lines)
+            JobHandle makeEdges = new MakeEdgesJob(vertices, shapeRanges, result.Edges)
                 .Schedule(arrayLength: shapeCount, innerloopBatchCount: 8);
 
             { // Cleanup
@@ -80,7 +81,7 @@ namespace Backstreets.FOV.Sandbox
                 IndexRange shape = shapes[shapeIndex];
                 NativeSlice<float2> shapeVertices = vertices.Slice(shape.Start, shape.Length);
                 NativeArray<Line> shapeEdges = edges.GetSubArray(shape.Start, shape.Length);
-                NativeArray<float2> edgeCorners = shapeEdges.Reinterpret<float2>(LineSize);
+                NativeArray<float2> edgeCorners = shapeEdges.Reinterpret<float2>(UnsafeUtility.SizeOf<Line>());
                 for (int i = 0; i < shapeVertices.Length - 1; i++)
                 {
                     float2 vertex = shapeVertices[i];
@@ -93,11 +94,6 @@ namespace Backstreets.FOV.Sandbox
                     edgeCorners[^1] = edgeCorners[0] = shapeVertices[^1];
                 }
             }
-
-
-            private const int FloatSize = 4;
-            private const int Float2Size = FloatSize * 2;
-            private const int LineSize = Float2Size * 2;
         }
     }
 }

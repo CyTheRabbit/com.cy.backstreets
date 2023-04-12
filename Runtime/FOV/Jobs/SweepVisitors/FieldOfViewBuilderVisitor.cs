@@ -36,9 +36,9 @@ namespace Backstreets.FOV.Jobs.SweepVisitors
         {
             if (update.OperationFailed)
             {
-                fieldOfView.ConflictingBounds.Add(corner.Line);
+                fieldOfView.ConflictingBounds.Add(corner.Edge);
             }
-            else if (update.ClosestObstacleChanged)
+            else if (update.ClosestEdgeChanged)
             {
                 fieldOfView.Add(currentBound, currentEdgeIndex);
                 currentBound = new Line(right: lineOfSight.Raycast(), left: default);

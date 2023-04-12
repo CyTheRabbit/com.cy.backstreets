@@ -13,12 +13,12 @@ namespace Backstreets.FOV
 
     public struct PocketGeometry : INativeDisposable
     {
-        public NativeArray<Line> Lines;
+        public NativeArray<Line> Edges;
 
-        public PocketGeometry(int length) => Lines = new NativeArray<Line>(length, Allocator.TempJob);
+        public PocketGeometry(int length) => Edges = new NativeArray<Line>(length, Allocator.TempJob);
 
-        public void Dispose() => Lines.Dispose();
+        public void Dispose() => Edges.Dispose();
 
-        public JobHandle Dispose(JobHandle inputDeps) => Lines.Dispose(inputDeps);
+        public JobHandle Dispose(JobHandle inputDeps) => Edges.Dispose(inputDeps);
     }
 }

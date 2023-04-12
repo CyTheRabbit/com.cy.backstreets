@@ -38,7 +38,7 @@ namespace Backstreets.FOV
         private JobPromise<BlockingGeometry> FetchGeometryData(PocketID pocket)
         {
             JobPromise<PocketGeometry> geometryPromise = geometrySource.GetGeometry(pocket);
-            NativeArray<Line> edges = geometryPromise.Result.Lines;
+            NativeArray<Line> edges = geometryPromise.Result.Edges;
             BlockingGeometry result = new(edges.Length * 2, Allocator.TempJob);
 
             JobHandle assemble = new BuildCornersJob(space, edges, result.Corners)

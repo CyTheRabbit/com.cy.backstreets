@@ -10,22 +10,22 @@ namespace Backstreets.FOV.Geometry
     [BurstCompatible]
     internal struct LineOfSight : INativeDisposable
     {
-        private NativeList<Line> obstacles; // It might be more efficient to use a linked list.
-        private NativeList<int> obstacleIds;
+        private NativeList<Line> edges; // It might be more efficient to use a linked list.
+        private NativeList<int> edgeIds;
         private float2 ray;
 
         public LineOfSight(int capacity)
         {
-            obstacles = new NativeList<Line>(capacity, Allocator.TempJob);
-            obstacleIds = new NativeList<int>(capacity, Allocator.TempJob);
+            edges = new NativeList<Line>(capacity, Allocator.TempJob);
+            edgeIds = new NativeList<int>(capacity, Allocator.TempJob);
             ray = default;
         }
 
         public readonly float2 Raycast() =>
-            obstacles.IsEmpty ? default : ProjectFromOrigin(obstacles[0], ray) ?? throw new Exception();
+            edges.IsEmpty ? default : ProjectFromOrigin(edges[0], ray) ?? throw new Exception();
 
         public readonly int RaycastId() => 
-            obstacleIds.IsEmpty ? InvalidEdgeID : obstacleIds[0];
+            edgeIds.IsEmpty ? InvalidEdgeID : edgeIds[0];
 
         public void LookAt(float2 direction) => ray = direction;
 
@@ -33,88 +33,88 @@ namespace Backstreets.FOV.Geometry
 
         public UpdateReport Update(Corner corner)
         {
-            bool isPerpendicularToOrigin = GetOriginDomain(corner.Line) is LineDomain.Line;
+            bool isPerpendicularToOrigin = GetOriginDomain(corner.Edge) is LineDomain.Line;
             if (isPerpendicularToOrigin) return default;
 
             return corner.End switch
             {
-                Corner.Endpoint.Right => AddObstacle(corner.Line, corner.LineIndex),
-                Corner.Endpoint.Left => RemoveObstacle(corner.LineIndex),
+                Corner.Endpoint.Right => AddEdge(corner.Edge, corner.EdgeIndex),
+                Corner.Endpoint.Left => RemoveEdge(corner.EdgeIndex),
                 _ => throw new ArgumentOutOfRangeException()
             };
         }
 
-        public UpdateReport AddObstacle(Line insert, int id)
+        public UpdateReport AddEdge(Line insert, int id)
         {
-            CompareObstacleDistance comparer = new();
+            CompareEdgeDistance comparer = new();
             int insertIndex;
-            for (insertIndex = 0; insertIndex < obstacles.Length; insertIndex++)
+            for (insertIndex = 0; insertIndex < edges.Length; insertIndex++)
             {
-                if (comparer.Compare(insert, obstacles[insertIndex]) < 0) break;
+                if (comparer.Compare(insert, edges[insertIndex]) < 0) break;
             }
 
-            if (insertIndex == obstacles.Length)
+            if (insertIndex == edges.Length)
             {
-                AppendObstacle(insert, id);
+                AppendEdge(insert, id);
             }
             else
             {
-                InsertObstacle(insert, id, insertIndex);
+                InsertEdge(insert, id, insertIndex);
             }
 
             return new UpdateReport
             {
-                ClosestObstacleChanged = insertIndex == 0,
+                ClosestEdgeChanged = insertIndex == 0,
             };
         }
 
-        public UpdateReport RemoveObstacle(int id)
+        public UpdateReport RemoveEdge(int id)
         {
-            int index = obstacleIds.IndexOf(id);
+            int index = edgeIds.IndexOf(id);
             if (index < 0) return new UpdateReport { OperationFailed = true };
 
-            RemoveObstacleAtIndex(index);
+            RemoveEdgeAtIndex(index);
             return new UpdateReport
             {
-                ClosestObstacleChanged = index == 0
+                ClosestEdgeChanged = index == 0
             };
         }
 
         public void Dispose()
         {
-            obstacles.Dispose();
-            obstacleIds.Dispose();
+            edges.Dispose();
+            edgeIds.Dispose();
         }
 
         public JobHandle Dispose(JobHandle inputDeps) => JobHandle.CombineDependencies(
-            obstacles.Dispose(inputDeps),
-            obstacleIds.Dispose(inputDeps));
+            edges.Dispose(inputDeps),
+            edgeIds.Dispose(inputDeps));
 
-        private void AppendObstacle(Line insert, int id)
+        private void AppendEdge(Line insert, int id)
         {
-            obstacles.Add(insert);
-            obstacleIds.Add(id);
+            edges.Add(insert);
+            edgeIds.Add(id);
         }
 
-        private void InsertObstacle(Line insert, int id, int insertIndex)
+        private void InsertEdge(Line insert, int id, int insertIndex)
         {
-            obstacles.InsertRangeWithBeginEnd(insertIndex, insertIndex + 1);
-            obstacles[insertIndex] = insert;
-            obstacleIds.InsertRangeWithBeginEnd(insertIndex, insertIndex + 1);
-            obstacleIds[insertIndex] = id;
+            edges.InsertRangeWithBeginEnd(insertIndex, insertIndex + 1);
+            edges[insertIndex] = insert;
+            edgeIds.InsertRangeWithBeginEnd(insertIndex, insertIndex + 1);
+            edgeIds[insertIndex] = id;
         }
 
-        private void RemoveObstacleAtIndex(int index)
+        private void RemoveEdgeAtIndex(int index)
         {
-            obstacles.RemoveAt(index);
-            obstacleIds.RemoveAt(index);
+            edges.RemoveAt(index);
+            edgeIds.RemoveAt(index);
         }
 
 
         private const int InvalidEdgeID = -1;
 
 
-        private readonly struct CompareObstacleDistance : IComparer<Line>
+        private readonly struct CompareEdgeDistance : IComparer<Line>
         {
             public int Compare(Line x, Line y)
             {
@@ -138,14 +138,14 @@ namespace Backstreets.FOV.Geometry
 
         public struct UpdateReport
         {
-            public bool ClosestObstacleChanged;
+            public bool ClosestEdgeChanged;
             public bool OperationFailed;
 
 
             public static UpdateReport operator +(UpdateReport x, UpdateReport y) =>
                 new()
                 {
-                    ClosestObstacleChanged = x.ClosestObstacleChanged || y.ClosestObstacleChanged,
+                    ClosestEdgeChanged = x.ClosestEdgeChanged || y.ClosestEdgeChanged,
                     OperationFailed = x.OperationFailed || y.OperationFailed,
                 };
         }

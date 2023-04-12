@@ -12,30 +12,30 @@ namespace Backstreets.FOV.Jobs
     {
         public BuildCornersJob(
             FieldOfViewSpace space,
-            NativeArray<Line> lines,
+            NativeArray<Line> edges,
             NativeArray<Corner> corners)
         {
-            this.lines = lines;
+            this.edges = edges;
             this.space = space;
             this.corners = corners.Reinterpret<CornerPair>(UnsafeUtility.SizeOf<Corner>());
         }
 
-        [ReadOnly] private readonly NativeArray<Line> lines;
+        [ReadOnly] private readonly NativeArray<Line> edges;
         [ReadOnly] private readonly FieldOfViewSpace space;
         [WriteOnly] private NativeArray<CornerPair> corners;
 
         public void Execute(int index)
         {
-            Line worldLine = lines[index];
-            Line localLine = AlignAgainstOrigin(space.WorldToViewport(worldLine));
-            corners[index] = new CornerPair(localLine, index);
+            Line worldEdge = edges[index];
+            Line localEdge = AlignAgainstOrigin(space.WorldToViewport(worldEdge));
+            corners[index] = new CornerPair(localEdge, index);
         }
 
-        private static Line AlignAgainstOrigin(Line line) =>
-            LineMath.GetOriginDomain(line) switch
+        private static Line AlignAgainstOrigin(Line edge) =>
+            LineMath.GetOriginDomain(edge) switch
             {
-                LineMath.LineDomain.Top => line.Reverse(),
-                _ => line,
+                LineMath.LineDomain.Top => edge.Reverse(),
+                _ => edge,
             };
         
         [BurstCompatible]

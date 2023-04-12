@@ -19,10 +19,10 @@ namespace Backstreets.FOV.Jobs
             JobHandle copyCorners = new CopyArrayJob<Corner>(corners, orderedCorners).Schedule(geometry);
             JobHandle orderCorners = orderedCorners.SortJob(new Corner.CompareByAngle()).Schedule(copyCorners);
             JobHandle narrowIndexRange =
-                new GetCornerRangeJob(orderedCorners, indexRange, visitor.RightLimit, visitor.LeftLimit)
+                new GetIndexRangeJob(orderedCorners, indexRange, visitor.RightLimit, visitor.LeftLimit)
                     .Schedule(orderCorners);
             JobHandle prepareStartingLineOfSight =
-                new RaycastLinesJob(visitor, corners, LineMath.Ray(visitor.RightLimit), lineOfSight)
+                new RaycastEdgesJob(visitor, corners, LineMath.Ray(visitor.RightLimit), lineOfSight)
                     .Schedule(geometry);
             JobHandle preparationJobs = JobHandle.CombineDependencies(prepareStartingLineOfSight, narrowIndexRange);
 
@@ -84,7 +84,7 @@ namespace Backstreets.FOV.Jobs
             {
                 foreach (Corner corner in corners.Slice(range.Start, range.Length))
                 {
-                    if (!visitor.ShouldProcess(corner.Line)) continue;
+                    if (!visitor.ShouldProcess(corner.Edge)) continue;
     
                     lineOfSight.LookAt(corner);
                     visitor.PreUpdate(in lineOfSight);
@@ -95,9 +95,9 @@ namespace Backstreets.FOV.Jobs
         }
 
         [BurstCompile]
-        private struct RaycastLinesJob : IJob
+        private struct RaycastEdgesJob : IJob
         {
-            public RaycastLinesJob(TVisitor visitor, NativeArray<Corner> corners, float2 ray, LineOfSight lineOfSight)
+            public RaycastEdgesJob(TVisitor visitor, NativeArray<Corner> corners, float2 ray, LineOfSight lineOfSight)
             {
                 this.visitor = visitor;
                 this.corners = corners;
@@ -116,33 +116,33 @@ namespace Backstreets.FOV.Jobs
                 {
                     // each line has two corners, therefore it occurs twice in the corners list.
                     if (corner.End == Corner.Endpoint.Left) continue;
-                    if (!visitor.ShouldProcess(corner.Line)) continue;
+                    if (!visitor.ShouldProcess(corner.Edge)) continue;
 
-                    if (IsHit(corner.Line))
+                    if (IsHit(corner.Edge))
                     {
-                        lineOfSight.AddObstacle(corner.Line, corner.LineIndex);
+                        lineOfSight.AddEdge(corner.Edge, corner.EdgeIndex);
                     }
                 }
             }
 
-            private bool IsHit(Line obstacle)
+            private bool IsHit(Line edge)
             {
-                LineMath.RayDomain rightDomain = LineMath.GetDomain(ray, obstacle.Right);
-                LineMath.RayDomain leftDomain = LineMath.GetDomain(ray, obstacle.Left);
+                LineMath.RayDomain rightDomain = LineMath.GetDomain(ray, edge.Right);
+                LineMath.RayDomain leftDomain = LineMath.GetDomain(ray, edge.Left);
                 return rightDomain is LineMath.RayDomain.Right or LineMath.RayDomain.Straight
                        && leftDomain is LineMath.RayDomain.Left;
             }
         }
 
         [BurstCompile]
-        private struct GetCornerRangeJob : IJob
+        private struct GetIndexRangeJob : IJob
         {
             [ReadOnly] private NativeArray<Corner> orderedCorners;
             [WriteOnly] private NativeReference<IndexRange> indexRange;
             private readonly float rightLimit;
             private readonly float leftLimit;
 
-            public GetCornerRangeJob(
+            public GetIndexRangeJob(
                 NativeArray<Corner> orderedCorners,
                 NativeReference<IndexRange> indexRange,
                 float rightLimit,
