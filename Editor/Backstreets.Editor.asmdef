@@ -3,6 +3,7 @@
   "rootNamespace": "Backstreets.Editor",
   "references": [
     "Backstreets",
-    "Unity.RenderPipelines.Core.Runtime"
+    "Unity.RenderPipelines.Core.Runtime",
+    "Unity.Mathematics"
   ]
 }

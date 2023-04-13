@@ -1,5 +1,6 @@
 using System.Linq;
-using Backstreets.Data;
+using Backstreets.FOV.Geometry;
+using Unity.Mathematics;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.Rendering;
@@ -8,24 +9,24 @@ namespace Editor.PocketEditor.CustomHandles
 {
     public static class PortalHandle
     {
-        public static void Static(in PortalData data, Color? color, float? thickness)
+        public static void Static(Line line, Color? color, float? thickness)
         {
             if (Event.current is not {type: EventType.Repaint}) return;
 
-            Draw(in data, color ?? Handles.color, thickness ?? 0);
+            Draw(line, color ?? Handles.color, thickness ?? 0);
         }
         
-        public static bool Clickable(in PortalData data, Color? color, float? thickness)
+        public static bool Clickable(Line line, Color? color, float? thickness)
         {
             int controlID = GUIUtility.GetControlID(ControlHint, FocusType.Passive);
-            HandleUtility.AddControl(controlID, Glow.DistanceToPointer(in data));
-            HandleUtility.AddControl(controlID, Arrow.DistanceToPointer(in data));
+            HandleUtility.AddControl(controlID, Glow.DistanceToPointer(line));
+            HandleUtility.AddControl(controlID, Arrow.DistanceToPointer(line));
 
             bool isHovered = HandleUtility.nearestControl == controlID;
             switch (Event.current.GetTypeForControl(controlID))
             {
                 case EventType.Repaint:
-                    Draw(in data, isHovered ? Color.white : color ?? Handles.color, thickness ?? 0);
+                    Draw(line, isHovered ? Color.white : color ?? Handles.color, thickness ?? 0);
                     return false;
                 case EventType.MouseDown when isHovered:
                     GUIUtility.hotControl = controlID;
@@ -40,11 +41,29 @@ namespace Editor.PocketEditor.CustomHandles
             }
         }
 
-        private static void Draw(in PortalData data, Color color, float thickness)
+        private static void Draw(Line line, Color color, float thickness)
         {
-            using Handles.DrawingScope _ = new(color, data.LocalToWorld);
-            Glow.Draw(in data);
+            using Handles.DrawingScope _ = new(color, MakeLineMatrix(line));
+            Glow.Draw(line);
             Arrow.Draw(thickness);
+        }
+
+        private static Matrix4x4 MakeLineMatrix(Line line)
+        {
+            Vector2 middle = (line.Left + line.Right) / 2;
+            Vector2 up = Vector2.Perpendicular(line.Right - line.Left);
+            return Matrix4x4.Translate(middle) *
+                   Matrix4x4.LookAt(Vector3.zero, Vector3.forward, up);
+        }
+
+        private static Matrix4x4 MakeLineMatrixStretched(Line line)
+        {
+            Vector2 middle = (line.Right + line.Left) / 2;
+            Vector2 up = Vector2.Perpendicular(line.Right - line.Left);
+            float width = math.length(line.Left - line.Right);
+            return Matrix4x4.Translate(middle) *
+                   Matrix4x4.LookAt(Vector3.zero, Vector3.forward, up) *
+                   Matrix4x4.Scale(new Vector3(width, 1, 1));
         }
 
         private static readonly int ControlHint = "PortalHandle".GetHashCode();
@@ -62,8 +81,8 @@ namespace Editor.PocketEditor.CustomHandles
                 Quaternion leftWingRotation = Quaternion.AngleAxis(WingsAngle, Vector3.forward);
                 Quaternion rightWingRotation = Quaternion.AngleAxis(-WingsAngle, Vector3.forward);
 
-                Vector3 origin = Vector3.zero;
-                Vector3 tip = origin + Vector3.up * ArrowLength;
+                Vector3 tip = Vector3.zero;
+                Vector3 origin = tip + Vector3.down * ArrowLength;
                 Vector3 leftWing = leftWingRotation * Vector3.down * WingLength + tip;
                 Vector3 rightWing = rightWingRotation * Vector3.down * WingLength + tip;
 
@@ -78,10 +97,10 @@ namespace Editor.PocketEditor.CustomHandles
                 }
             }
 
-            internal static float DistanceToPointer(in PortalData data)
+            internal static float DistanceToPointer(Line line)
             {
-                using Handles.DrawingScope matrixScope = new(data.LocalToWorld);
-                return Lines.Select(line => HandleUtility.DistanceToLine(line.p1, line.p2)).Min();
+                using Handles.DrawingScope matrixScope = new(MakeLineMatrix(line));
+                return Lines.Select(l => HandleUtility.DistanceToLine(l.p1, l.p2)).Min();
             }
         }
 
@@ -110,9 +129,9 @@ namespace Editor.PocketEditor.CustomHandles
                 };
             }
             
-            internal static void Draw(in PortalData data)
+            internal static void Draw(Line line)
             {
-                Matrix4x4 matrix = data.LocalToWorld * Matrix4x4.Scale(new Vector3(data.width, 1, 1));
+                Matrix4x4 matrix = MakeLineMatrixStretched(line);
                 Color color = Handles.color * new Color(1f, 1f, 1f, 0.5f) + (Handles.lighting
                     ? new Color(0.0f, 0.0f, 0.0f, 0.5f)
                     : new Color(0.0f, 0.0f, 0.0f, 0.0f));
@@ -124,9 +143,9 @@ namespace Editor.PocketEditor.CustomHandles
                 Graphics.ExecuteCommandBuffer(cmd);
             }
 
-            internal static float DistanceToPointer(in PortalData data)
+            internal static float DistanceToPointer(Line line)
             {
-                using Handles.DrawingScope matrixScope = new(data.LocalToWorld * Matrix4x4.Scale(new Vector3(data.width, Depth, 1)));
+                using Handles.DrawingScope matrixScope = new(MakeLineMatrixStretched(line));
                 return HandleUtility.DistanceToRectangle(Vector3.down / 2, Quaternion.identity, 0.5f);
             }
         }

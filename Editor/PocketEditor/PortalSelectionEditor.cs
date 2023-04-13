@@ -22,14 +22,8 @@ namespace Editor.PocketEditor
             using EditorGUI.ChangeCheckScope check = new();
 
             GUILayout.Label(Label);
-            Selection.Position = EditorGUILayout.Vector2Field(GUIContent.none, Selection.Position);
-            Selection.Rotation = EditorGUILayout.Slider(GUIContent.none, Selection.Rotation, 0, 360);
-            Selection.Scale = EditorGUILayout.DelayedFloatField(GUIContent.none, Selection.Scale);
-
-            if (check.changed)
-            {
-                OnValidate();
-            }
+            Selection.Left = EditorGUILayout.Vector2Field(GUIContent.none, Selection.Left);
+            Selection.Right = EditorGUILayout.Vector2Field(GUIContent.none, Selection.Right);
         }
 
         private void ReloadStyles()
@@ -38,11 +32,6 @@ namespace Editor.PocketEditor
 
             static GUIStyle FindStyle(string style) =>
                 GUI.skin.FindStyle(style) ?? EditorGUIUtility.GetBuiltinSkin(EditorSkin.Inspector).FindStyle(style);
-        }
-
-        private void OnValidate()
-        {
-            if (Selection.Scale <= 0) Selection.Scale = 1;
         }
 
         private const float IconSize = 32f;

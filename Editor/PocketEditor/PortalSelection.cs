@@ -9,22 +9,16 @@ namespace Editor.PocketEditor
         [SerializeField] private PocketPrefabDetails owner;
         [SerializeField] private int portalIndex;
 
-        public Vector2 Position
+        public Vector2 Left
         {
-            get => owner.Portals[portalIndex].position;
-            set => owner.Portals[portalIndex].position = value;
+            get => owner.Portals[portalIndex].left;
+            set => owner.Portals[portalIndex].left = value;
         }
 
-        public float Rotation
+        public Vector2 Right
         {
-            get => owner.Portals[portalIndex].rotation;
-            set => owner.Portals[portalIndex].rotation = value;
-        }
-
-        public float Scale
-        {
-            get => owner.Portals[portalIndex].width;
-            set => owner.Portals[portalIndex].width = value;
+            get => owner.Portals[portalIndex].right;
+            set => owner.Portals[portalIndex].right = value;
         }
 
 

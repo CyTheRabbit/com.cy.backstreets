@@ -1,4 +1,5 @@
 using Backstreets.Data;
+using Backstreets.FOV.Geometry;
 using Backstreets.Pocket;
 using Editor.PocketEditor.CustomHandles;
 using UnityEditor;
@@ -15,7 +16,8 @@ namespace Editor.PocketEditor
             for (int i = 0; i < pocket.Portals.Length; i++)
             {
                 PortalData data = pocket.Portals[i];
-                if (PortalHandle.Clickable(in data, HandleColor, 2f))
+                Line portalLine = new(data.right, data.left);
+                if (PortalHandle.Clickable(portalLine, HandleColor, 2f))
                 {
                     PortalSelection.Focus(pocket, i);
                 }
@@ -27,7 +29,8 @@ namespace Editor.PocketEditor
         {
             foreach (PortalData data in pocket.Portals)
             {
-                PortalHandle.Static(in data, InactiveColor, 1f);
+                Line portalLine = new(data.right, data.left);
+                PortalHandle.Static(portalLine, InactiveColor, 1f);
             }
             
             Handles.DrawSolidRectangleWithOutline(pocket.PocketRect, Color.clear, Color.red);
