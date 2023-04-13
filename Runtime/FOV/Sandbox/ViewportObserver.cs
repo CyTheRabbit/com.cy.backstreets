@@ -1,5 +1,3 @@
-using System;
-using System.Linq;
 using Backstreets.Data;
 using Backstreets.FOV.Geometry;
 using Backstreets.FOV.Jobs;
@@ -14,7 +12,6 @@ namespace Backstreets.FOV.Sandbox
 {
     public class ViewportObserver : MonoBehaviour
     {
-        [SerializeField] private ViewportObstacle[] obstacles = Array.Empty<ViewportObstacle>();
         [SerializeField] private FanMeshColoring.Palette palette = DefaultPalette;
         [SerializeField] private int pocketID;
         private Mesh mesh;
@@ -31,12 +28,10 @@ namespace Backstreets.FOV.Sandbox
             builder ??= new FieldOfViewBuilder(new SceneGeometrySource(gameObject.scene));
             
             float2 origin = ((float3)transform.position).xy;
-            float2[][] shapes = obstacles.Select(obstacle => obstacle.Vertices).ToArray();
-            int totalEdgeCount = shapes.Sum(shape => shape.Length);
 
             builder.SetOrigin(origin, new PocketID(pocketID));
             using JobPromise<FieldOfView> buildFOV = builder.Build(Allocator.TempJob);
-            using JobPromise<FanMeshData> buildMesh = ScheduleMeshGeneration(in buildFOV, totalEdgeCount);
+            using JobPromise<FanMeshData> buildMesh = ScheduleMeshGeneration(in buildFOV, buildFOV.Result.BoundsCapacity);
 
             using FieldOfView fieldOfView = buildFOV.Complete();
             using FanMeshData meshData = buildMesh.Complete();

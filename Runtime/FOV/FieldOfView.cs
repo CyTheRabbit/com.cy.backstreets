@@ -10,10 +10,12 @@ namespace Backstreets.FOV
         internal NativeList<Line> Bounds;
         internal NativeList<int> EdgeIndices;
         internal NativeList<Line> ConflictingBounds;
+        internal int BoundsCapacity;
 
         internal FieldOfView(FieldOfViewSpace space, int boundsCapacity, Allocator allocator)
         {
             Space = space;
+            BoundsCapacity = boundsCapacity;
             Bounds = new NativeList<Line>(boundsCapacity, allocator);
             EdgeIndices = new NativeList<int>(boundsCapacity, allocator);
             ConflictingBounds = new NativeList<Line>(allocator);

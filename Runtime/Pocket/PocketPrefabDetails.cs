@@ -1,6 +1,7 @@
 using System;
 using System.Linq;
 using Backstreets.Data;
+using Backstreets.FOV.Geometry;
 using UnityEngine;
 using UnityEngine.Tilemaps;
 
@@ -9,16 +10,29 @@ namespace Backstreets.Pocket
     public class PocketPrefabDetails : MonoBehaviour
     {
         [SerializeField] private int pocketID;
-        [SerializeField] private PortalData[] _portals = Array.Empty<PortalData>();
+        [SerializeField] private EdgeData[] edges;
+        [SerializeField] private PortalData[] portals = Array.Empty<PortalData>();
         [SerializeField] private Bounds pocketBounds = default;
 
         public PocketID PocketID => new(pocketID);
 
-        public PortalData[] Portals => _portals;
+        public PortalData[] Portals => portals;
 
         public Bounds PocketBounds => pocketBounds;
 
         public Rect PocketRect => new(pocketBounds.min, pocketBounds.size);
+
+        public EdgeData[] Edges
+        {
+            get => edges;
+            set => edges = value;
+        }
+
+        public Line? FindEdge(int id)
+        {
+            int index = Array.FindIndex(edges, edge => edge.id == id);
+            return index == -1 ? null : edges[index].Line;
+        }
 
         private void OnValidate()
         {

@@ -22,8 +22,8 @@ namespace Editor.PocketEditor
             using EditorGUI.ChangeCheckScope check = new();
 
             GUILayout.Label(Label);
-            Selection.Left = EditorGUILayout.Vector2Field(GUIContent.none, Selection.Left);
-            Selection.Right = EditorGUILayout.Vector2Field(GUIContent.none, Selection.Right);
+            Selection.EdgeID = EditorGUILayout.IntField("Edge ID", Selection.EdgeID);
+            Selection.ExitID = EditorGUILayout.IntField("Exit ID", Selection.ExitID);
         }
 
         private void ReloadStyles()

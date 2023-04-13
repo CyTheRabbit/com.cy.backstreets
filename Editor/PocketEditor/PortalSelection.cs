@@ -9,16 +9,16 @@ namespace Editor.PocketEditor
         [SerializeField] private PocketPrefabDetails owner;
         [SerializeField] private int portalIndex;
 
-        public Vector2 Left
+        public int EdgeID
         {
-            get => owner.Portals[portalIndex].left;
-            set => owner.Portals[portalIndex].left = value;
+            get => owner.Portals[portalIndex].edgeID;
+            set => owner.Portals[portalIndex].edgeID = value;
         }
 
-        public Vector2 Right
+        public int ExitID
         {
-            get => owner.Portals[portalIndex].right;
-            set => owner.Portals[portalIndex].right = value;
+            get => owner.Portals[portalIndex].exitID;
+            set => owner.Portals[portalIndex].exitID = value;
         }
 
 
