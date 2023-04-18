@@ -5,6 +5,8 @@ namespace Backstreets.FOV.Geometry
 {
     internal static class LineMath
     {
+        private const float Epsilon = 0.0001f;
+
         private static float Determinant(float2 a, float2 b) => a.x * b.y - a.y * b.x;
 
         internal static float Angle(float2 point)
@@ -44,18 +46,22 @@ namespace Backstreets.FOV.Geometry
         internal static LineDomain GetDomain(Line line, float2 testPoint) => 
             Determinant(line.Right - line.Left, line.Right - testPoint) switch
             {
-                > 0 => LineDomain.Bottom,
-                0 => LineDomain.Line,
-                < 0 => LineDomain.Top,
+                > Epsilon => LineDomain.Bottom,
+                >= -Epsilon and <= Epsilon => LineDomain.Line,
+                < -Epsilon => LineDomain.Top,
                 _ => throw new ArithmeticException()
             };
+
+        internal static LineDomain GetDomain(Line line, Line testLine) => Combine(
+                GetDomain(line, testLine.Right),
+                GetDomain(line, testLine.Left));
 
         internal static RayDomain GetDomain(float2 ray, float2 testPoint) =>
             Determinant(ray, testPoint) switch
             {
-                < 0 => RayDomain.Right,
-                0 => RayDomain.Straight,
-                > 0 => RayDomain.Left,
+                < -Epsilon => RayDomain.Right,
+                >= -Epsilon and <= Epsilon => RayDomain.Straight,
+                > Epsilon => RayDomain.Left,
                 _ => throw new ArithmeticException()
             };
 
@@ -64,9 +70,9 @@ namespace Backstreets.FOV.Geometry
             // in the end you get the following expression:
             Determinant(line.Right, line.Left) switch
             {
-                > 0 => LineDomain.Bottom,
-                0 => LineDomain.Line,
-                < 0 => LineDomain.Top,
+                > Epsilon => LineDomain.Bottom,
+                >= -Epsilon and <= Epsilon => LineDomain.Line,
+                < -Epsilon => LineDomain.Top,
                 _ => throw new ArithmeticException()
             };
 

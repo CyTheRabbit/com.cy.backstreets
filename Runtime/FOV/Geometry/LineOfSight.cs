@@ -118,7 +118,11 @@ namespace Backstreets.FOV.Geometry
         {
             public int Compare(Line x, Line y)
             {
-                return SolveFor(x, y) ?? -SolveFor(y, x) ?? 0;
+                // Shrink lines insignificantly in case they have a shared corner.
+                Line xShrunk = Shrink(x);
+                Line yShrunk = Shrink(y);
+
+                return SolveFor(xShrunk, yShrunk) ?? -SolveFor(yShrunk, xShrunk) ?? 0;
 
                 static int? SolveFor(Line main, Line other)
                 {
@@ -134,6 +138,12 @@ namespace Backstreets.FOV.Geometry
                     };
                 }
             }
+
+            private static Line Shrink(Line line) => new(
+                right: math.lerp(line.Right, line.Left, CutoffRatio),
+                left: math.lerp(line.Right, line.Left, 1 - CutoffRatio));
+
+            private const float CutoffRatio = 0.01f;
         }
 
         public struct UpdateReport
