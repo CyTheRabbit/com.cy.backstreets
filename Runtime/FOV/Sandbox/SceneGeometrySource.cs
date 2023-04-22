@@ -1,36 +1,61 @@
 using System.Collections.Generic;
 using System.Linq;
 using Backstreets.Data;
-using Backstreets.FOV.Jobs;
+using Backstreets.FOV.Geometry;
 using Backstreets.Pocket;
+using UnityEngine;
 using UnityEngine.SceneManagement;
 
 namespace Backstreets.FOV.Sandbox
 {
     internal class SceneGeometrySource : IGeometrySource
     {
-        private Scene scene;
+        private PocketPrefabDetails[] scenePockets;
+        private readonly IEnumerable<PocketPrefabDetails> scenePocketsSource;
+        private float lastFetchTime;
 
         public SceneGeometrySource(Scene scene)
         {
-            this.scene = scene;
+            scenePocketsSource = FetchScenePockets(scene);
         }
 
-        public JobPromise<PocketGeometry> GetGeometry(PocketID pocketID)
+        private PocketPrefabDetails[] ScenePockets
         {
-            PocketPrefabDetails pocket = GetScenePockets().SingleOrDefault(p => p.PocketID == pocketID);
-            if (pocket == null) return JobPromise<PocketGeometry>.Complete(new PocketGeometry(length: 0));
-
-            PocketGeometry result = new(pocket.Edges.Length);
-            for (int i = 0; i < pocket.Edges.Length; i++)
+            get
             {
-                result.Edges[i] = pocket.Edges[i].Line;
+                if (Time.realtimeSinceStartup < lastFetchTime + FetchLifetime) return scenePockets;
+
+                lastFetchTime = Time.realtimeSinceStartup;
+                return scenePockets = scenePocketsSource.ToArray();
+            }
+        }
+
+        public PocketGeometry GetGeometry(PocketID pocketID)
+        {
+            PocketPrefabDetails pocket = FindPocket(pocketID);
+            return pocket == null ? PocketGeometry.Nothing(pocketID) : pocket.RuntimeGeometry;
+        }
+
+        private PocketPrefabDetails FindPocket(PocketID pocketID)
+        {
+            foreach (PocketPrefabDetails pocket in ScenePockets)
+            {
+                if (pocket.PocketID == pocketID) return pocket;
             }
 
-            return JobPromise<PocketGeometry>.Complete(result);
+            return null;
         }
 
-        private IEnumerable<PocketPrefabDetails> GetScenePockets() =>
-            scene.GetRootGameObjects().SelectMany(root => root.GetComponentsInChildren<PocketPrefabDetails>());
+
+        private const float FetchLifetime = 1f;
+
+        private static IEnumerable<PocketPrefabDetails> FetchScenePockets(Scene scene)
+        {
+            foreach (GameObject go in scene.GetRootGameObjects())
+            foreach (PocketPrefabDetails pocket in go.GetComponentsInChildren<PocketPrefabDetails>())
+            {
+                yield return pocket;
+            }
+        }
     }
 }

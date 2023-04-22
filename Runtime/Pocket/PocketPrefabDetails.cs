@@ -2,6 +2,7 @@ using System;
 using System.Linq;
 using Backstreets.Data;
 using Backstreets.FOV.Geometry;
+using Unity.Collections;
 using UnityEngine;
 using UnityEngine.Tilemaps;
 
@@ -13,6 +14,10 @@ namespace Backstreets.Pocket
         [SerializeField] private EdgeData[] edges;
         [SerializeField] private PortalData[] portals = Array.Empty<PortalData>();
         [SerializeField] private Bounds pocketBounds = default;
+
+        private PocketGeometry? runtimeGeometry;
+
+        public PocketGeometry RuntimeGeometry => runtimeGeometry ??= MakeRuntimeGeometry(Allocator.Persistent);
 
         public PocketID PocketID => new(pocketID);
 
@@ -34,9 +39,43 @@ namespace Backstreets.Pocket
             return index == -1 ? null : edges[index].Line;
         }
 
-        private void OnValidate()
+        public void OnValidate()
         {
             pocketBounds = CalculatePocketBounds();
+
+            runtimeGeometry?.Dispose();
+            runtimeGeometry = null;
+        }
+
+        public void OnDestroy()
+        {
+            runtimeGeometry?.Dispose();
+            runtimeGeometry = null;
+        }
+
+        private PocketGeometry MakeRuntimeGeometry(Allocator allocator)
+        {
+            PocketID id = new(pocketID);
+            PocketGeometry geometry = new(id, edges.Length, portals.Length, allocator);
+            using NativeParallelHashMap<int, int> edgeIdToIndex = new(edges.Length, Allocator.Temp);
+
+            for (int i = 0; i < edges.Length; i++)
+            {
+                EdgeData edgeData = edges[i];
+                edgeIdToIndex.Add(edgeData.id, i);
+                geometry.Edges[i] = edgeData.Line;
+            }
+
+            for (int i = 0; i < portals.Length; i++)
+            {
+                PortalData portalData = portals[i];
+                int edgeIndex = edgeIdToIndex[portalData.edgeID];
+                Line edge = geometry.Edges[edgeIndex];
+                PocketID exit = new(portalData.exitID);
+                geometry.Portals[i] = new Portal(edge, edgeIndex, entrance: id, exit);
+            }
+
+            return geometry;
         }
 
         private Bounds CalculatePocketBounds()

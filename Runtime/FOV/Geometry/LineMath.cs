@@ -43,6 +43,33 @@ namespace Backstreets.FOV.Geometry
             return ray * distance;
         }
 
+        internal static Line? ClipLine(Line line, Line window)
+        {
+            bool facesOrigin = GetOriginDomain(line) is LineDomain.Bottom;
+            if (!facesOrigin) return null;
+
+            float lineRightAngle = Angle(line.Right);
+            float lineLeftAngle = Angle(line.Left);
+            float windowRightAngle = Angle(window.Right);
+            float windowLeftAngle = Angle(window.Left);
+
+            bool isOverlapping = CompareAngleCyclic(lineRightAngle, windowLeftAngle) < 0 &&
+                                 CompareAngleCyclic(lineLeftAngle, windowRightAngle) > 0;
+            if (!isOverlapping) return null;
+
+            if (lineRightAngle < windowRightAngle && ProjectFromOrigin(line, window.Right) is { } newRight)
+            {
+                line.Right = newRight;
+            }
+
+            if (lineLeftAngle > windowLeftAngle && ProjectFromOrigin(line, window.Left) is { } newLeft)
+            {
+                line.Left = newLeft;
+            }
+
+            return line;
+        }
+
         internal static LineDomain GetDomain(Line line, float2 testPoint) => 
             Determinant(line.Right - line.Left, line.Right - testPoint) switch
             {
@@ -90,6 +117,36 @@ namespace Backstreets.FOV.Geometry
                 > 180 => -1,
                 _ => throw new ArithmeticException(),
             };
+        }
+
+        public static int CompareLineDistance(Line x, Line y)
+        {
+            const float cutoffRatio = 0.01f;
+
+            // Shrink lines insignificantly in case they have a shared corner.
+            Line xShrunk = Shrink(x);
+            Line yShrunk = Shrink(y);
+
+            return SolveFor(xShrunk, yShrunk) ?? -SolveFor(yShrunk, xShrunk) ?? 0;
+
+
+            static int? SolveFor(Line main, Line other)
+            {
+                LineDomain rightDomain = GetDomain(main, other.Right);
+                LineDomain leftDomain = GetDomain(main, other.Left);
+                LineDomain otherDomain = Combine(rightDomain, leftDomain);
+                LineDomain originDomain = GetOriginDomain(main);
+                return otherDomain switch
+                {
+                    LineDomain.Both => null,
+                    LineDomain.Line => 0,
+                    _ => otherDomain == originDomain ? 1 : -1,
+                };
+            }
+
+            static Line Shrink(Line line) => new(
+                right: math.lerp(line.Right, line.Left, cutoffRatio),
+                left: math.lerp(line.Left, line.Right, cutoffRatio));
         }
 
         internal static float? GetDistanceFromOrigin(Line line, float2 ray)

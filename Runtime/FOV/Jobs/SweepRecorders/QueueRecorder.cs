@@ -3,18 +3,15 @@ using Unity.Collections;
 
 namespace Backstreets.FOV.Jobs.SweepRecorders
 {
-    [BurstCompatible]
-    internal struct FieldOfViewRecorder : ISweepRecorder
+    internal struct QueueRecorder : ISweepRecorder
     {
-        [WriteOnly] private FieldOfView fieldOfView;
-        private Line currentBound;
-        private int currentEdgeIndex;
+        [WriteOnly] private NativeQueue<Bound> bounds;
+        private Bound currentBound;
 
-        public FieldOfViewRecorder(FieldOfView fieldOfView)
+        public QueueRecorder(NativeQueue<Bound> bounds)
         {
-            this.fieldOfView = fieldOfView;
-            currentBound = default;
-            currentEdgeIndex = InvalidEdgeIndex;
+            this.bounds = bounds;
+            currentBound = new Bound(line: default, InvalidEdgeIndex);
         }
 
         public float RightLimit => -180;
@@ -36,7 +33,7 @@ namespace Backstreets.FOV.Jobs.SweepRecorders
         {
             if (update.OperationFailed)
             {
-                fieldOfView.ConflictingBounds.Add(corner.Edge);
+                // conflictingBounds.AddNoResize(corner.Edge);
             }
             else if (update.ClosestEdgeChanged)
             {
@@ -54,8 +51,12 @@ namespace Backstreets.FOV.Jobs.SweepRecorders
 
         private void RecordBoundStart(in LineOfSight lineOfSight)
         {
-            currentBound = new Line(right: lineOfSight.Raycast(), left: default);
-            currentEdgeIndex = lineOfSight.RaycastId();
+            currentBound = new Bound
+            {
+                Right = lineOfSight.Raycast(),
+                Left = default,
+                EdgeIndex = lineOfSight.RaycastId(),
+            };
         }
 
         private void RecordBoundEnd(in LineOfSight lineOfSight)
@@ -65,7 +66,7 @@ namespace Backstreets.FOV.Jobs.SweepRecorders
 
         private void FlushBound()
         {
-            fieldOfView.Add(currentBound, currentEdgeIndex);
+            bounds.Enqueue(currentBound);
         }
 
 

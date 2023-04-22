@@ -116,34 +116,7 @@ namespace Backstreets.FOV.Geometry
 
         private readonly struct CompareEdgeDistance : IComparer<Line>
         {
-            public int Compare(Line x, Line y)
-            {
-                // Shrink lines insignificantly in case they have a shared corner.
-                Line xShrunk = Shrink(x);
-                Line yShrunk = Shrink(y);
-
-                return SolveFor(xShrunk, yShrunk) ?? -SolveFor(yShrunk, xShrunk) ?? 0;
-
-                static int? SolveFor(Line main, Line other)
-                {
-                    LineDomain rightDomain = GetDomain(main, other.Right);
-                    LineDomain leftDomain = GetDomain(main, other.Left);
-                    LineDomain otherDomain = Combine(rightDomain, leftDomain);
-                    LineDomain originDomain = GetOriginDomain(main);
-                    return otherDomain switch
-                    {
-                        LineDomain.Both => null,
-                        LineDomain.Line => 0,
-                        _ => otherDomain == originDomain ? 1 : -1,
-                    };
-                }
-            }
-
-            private static Line Shrink(Line line) => new(
-                right: math.lerp(line.Right, line.Left, CutoffRatio),
-                left: math.lerp(line.Right, line.Left, 1 - CutoffRatio));
-
-            private const float CutoffRatio = 0.01f;
+            public int Compare(Line x, Line y) => CompareLineDistance(x, y);
         }
 
         public struct UpdateReport

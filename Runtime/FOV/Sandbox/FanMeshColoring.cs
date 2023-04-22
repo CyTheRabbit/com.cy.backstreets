@@ -10,12 +10,16 @@ namespace Backstreets.FOV.Sandbox
         {
             NativeArray<Color> colors = new(mesh.vertexCount, Allocator.Temp);
 
-            colors[0] = palette.origin;
-            for (int i = 1; i < colors.Length; i++)
+            for (int i = 0; i < colors.Length; i++)
             {
-                int triangleIndex = (i - 1) / 2;
-                bool isEven = (triangleIndex & 1) == 0;
-                colors[i] = isEven ? palette.even : palette.odd;
+                int quadIndex = i / 4;
+                int indexInQuad = i % 4;
+                bool isNearEdge = (indexInQuad & 2) == 0;
+                bool isEven = (quadIndex & 1) == 0;
+                colors[i] =
+                    isNearEdge ? palette.origin :
+                    isEven ? palette.even :
+                    palette.odd;
             }
 
             mesh.SetColors(colors);

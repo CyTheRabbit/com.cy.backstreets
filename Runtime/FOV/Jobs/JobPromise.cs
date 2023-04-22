@@ -41,7 +41,7 @@ namespace Backstreets.FOV.Jobs
 
             Debug.LogErrorFormat(
                 format: "Promise of type {0}<{1}> reached end of its life span, yet memory ownership were not transferred nor memory was disposed.",
-                nameof(JobHandle), typeof(T).Name);
+                nameof(JobPromise<T>), typeof(T).Name);
             result.Dispose(Handle);
         }
 

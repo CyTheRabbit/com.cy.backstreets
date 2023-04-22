@@ -7,33 +7,27 @@ namespace Backstreets.FOV
     public struct FieldOfView : INativeDisposable
     {
         internal FieldOfViewSpace Space;
-        internal NativeList<Line> Bounds;
-        internal NativeList<int> EdgeIndices;
+        internal NativeQueue<BoundSector> Sectors;
         internal NativeList<Line> ConflictingBounds;
-        internal int BoundsCapacity;
 
-        internal FieldOfView(FieldOfViewSpace space, int boundsCapacity, Allocator allocator)
+        internal FieldOfView(FieldOfViewSpace space, Allocator allocator)
         {
+            Sectors = new NativeQueue<BoundSector>(allocator);
+            ConflictingBounds = new NativeList<Line>(ConflictingBoundsCapacity, allocator);
             Space = space;
-            BoundsCapacity = boundsCapacity;
-            Bounds = new NativeList<Line>(boundsCapacity, allocator);
-            EdgeIndices = new NativeList<int>(boundsCapacity, allocator);
-            ConflictingBounds = new NativeList<Line>(allocator);
         }
 
-        public bool IsCreated => Bounds.IsCreated && EdgeIndices.IsCreated && ConflictingBounds.IsCreated;
+        public bool IsCreated => Sectors.IsCreated && ConflictingBounds.IsCreated;
 
-        internal void Add(Line bound, int edgeIndex)
-        {
-            Bounds.Add(bound);
-            EdgeIndices.Add(edgeIndex);
-        }
+        public int BoundsLength => Sectors.Count;
+
+        public NativeArray<BoundSector> GetAllBoundSectors(Allocator allocator) =>
+            Sectors.ToArray(allocator);
 
         public void Dispose()
         {
             if (!IsCreated) return;
-            Bounds.Dispose();
-            EdgeIndices.Dispose();
+            Sectors.Dispose();
             ConflictingBounds.Dispose();
         }
 
@@ -41,9 +35,10 @@ namespace Backstreets.FOV
         {
             if (!IsCreated) return default;
             return JobHandle.CombineDependencies(
-                Bounds.Dispose(inputDeps),
-                EdgeIndices.Dispose(inputDeps),
+                Sectors.Dispose(inputDeps),
                 ConflictingBounds.Dispose(inputDeps));
         }
+
+        private const int ConflictingBoundsCapacity = 32;
     }
 }

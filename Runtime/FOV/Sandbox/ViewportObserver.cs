@@ -31,9 +31,9 @@ namespace Backstreets.FOV.Sandbox
 
             builder.SetOrigin(origin, new PocketID(pocketID));
             using JobPromise<FieldOfView> buildFOV = builder.Build(Allocator.TempJob);
-            using JobPromise<FanMeshData> buildMesh = ScheduleMeshGeneration(in buildFOV, buildFOV.Result.BoundsCapacity);
-
             using FieldOfView fieldOfView = buildFOV.Complete();
+
+            using JobPromise<FanMeshData> buildMesh = ScheduleMeshGeneration(fieldOfView, fieldOfView.BoundsLength);
             using FanMeshData meshData = buildMesh.Complete();
 
             ReinitializeMesh();
@@ -52,12 +52,15 @@ namespace Backstreets.FOV.Sandbox
 
 
         private static JobPromise<FanMeshData> ScheduleMeshGeneration(
-            in JobPromise<FieldOfView> fieldOfView,
+            FieldOfView fov,
             int estimatedLineCount)
         {
             FanMeshData meshData = new(estimatedLineCount, Allocator.TempJob);
-            BuildTriangleFanJob job = new(fieldOfView.Result, meshData);
-            return new JobPromise<FanMeshData>(job.Schedule(fieldOfView.Handle), meshData);
+            NativeArray<BoundSector> sectors = fov.GetAllBoundSectors(Allocator.TempJob);
+            BuildMeshDataJob job = new(sectors, fov.Space, meshData);
+            JobHandle handle = job.Schedule();
+            sectors.Dispose(handle);
+            return new JobPromise<FanMeshData>(handle, meshData);
         }
 
         private static void RenderMesh(Mesh mesh)
