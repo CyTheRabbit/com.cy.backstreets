@@ -5,6 +5,8 @@ namespace Backstreets.FOV.Geometry
 {
     internal static class LineMath
     {
+        public static readonly float2 Left = new(-1, 0);
+
         private const float Epsilon = 0.0001f;
 
         private static float Determinant(float2 a, float2 b) => a.x * b.y - a.y * b.x;

@@ -139,8 +139,10 @@ namespace Backstreets.FOV
 
             JobHandle assemble = new BuildCornersJob(space, edges, result.Corners)
                 .Schedule(arrayLength: edges.Length, innerloopBatchCount: 64);
+            JobHandle sort = result.Corners.SortJob(new Corner.CompareByAngle())
+                .Schedule(assemble);
 
-            return new JobPromise<BlockingGeometry>(assemble, result);
+            return new JobPromise<BlockingGeometry>(sort, result);
         }
 
         private JobPromise<FarBounds> SweepOrigin(in JobPromise<BlockingGeometry> geometry)

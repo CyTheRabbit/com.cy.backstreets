@@ -9,10 +9,6 @@ namespace Backstreets.FOV.Jobs.SweepFilters
 
         public PortalFilter(Line portalEdge) => this.portalEdge = portalEdge;
 
-        public float RightLimit => LineMath.Angle(portalEdge.Right);
-
-        public float LeftLimit => LineMath.Angle(portalEdge.Left);
-
         public bool ShouldProcess(Line edge) => IsEdgeAfterPortal(edge) && !IsPortalEdge(edge);
 
         private bool IsPortalEdge(Line edge) =>

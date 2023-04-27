@@ -14,10 +14,10 @@ namespace Backstreets.FOV.Geometry
         private NativeList<int> edgeIds;
         private float2 ray;
 
-        public LineOfSight(int capacity)
+        public LineOfSight(int capacity, Allocator allocator)
         {
-            edges = new NativeList<Line>(capacity, Allocator.TempJob);
-            edgeIds = new NativeList<int>(capacity, Allocator.TempJob);
+            edges = new NativeList<Line>(capacity, allocator);
+            edgeIds = new NativeList<int>(capacity, allocator);
             ray = default;
         }
 
