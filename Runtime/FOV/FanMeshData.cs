@@ -12,8 +12,8 @@ namespace Backstreets.FOV
 
         public FanMeshData(int lineCount, Allocator allocator)
         {
-            Vertices = new NativeList<float3>(lineCount * 2 + 1, allocator);
-            Indices = new NativeList<int>(lineCount * 3, allocator);
+            Vertices = new NativeList<float3>(lineCount * 4, allocator);
+            Indices = new NativeList<int>(lineCount * 6, allocator);
         }
 
         public void Apply(Mesh mesh, int submesh = 0)

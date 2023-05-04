@@ -4,6 +4,7 @@
   "references": [
     "Backstreets",
     "Unity.RenderPipelines.Core.Runtime",
-    "Unity.Mathematics"
+    "Unity.Mathematics",
+    "Unity.Collections"
   ]
 }

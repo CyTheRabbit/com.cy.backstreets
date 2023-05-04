@@ -32,21 +32,26 @@ namespace Editor.PocketEditor
                 PortalHandle.Static(portalLine, InactiveColor, 1f);
             }
 
-            foreach (EdgeData edge in pocket.Edges)
-            {
-                Handles.DrawLine((Vector2)edge.right, (Vector2)edge.left, 1f);
-            }
-            
+            DrawEdges(pocket);
             Handles.DrawSolidRectangleWithOutline(pocket.PocketRect, Color.clear, Color.red);
         }
 
         [DrawGizmo(GizmoType.Active | GizmoType.Selected, typeof(PocketPrefabDetails))]
         public static void DrawGizmoActive(PocketPrefabDetails pocket, GizmoType gizmoType)
         {
+            DrawEdges(pocket);
             Handles.DrawSolidRectangleWithOutline(pocket.PocketRect, Color.clear, Color.red);
         }
 
         private static readonly Color HandleColor = Color.cyan;
         private static readonly Color InactiveColor = Color.blue;
+
+        private static void DrawEdges(PocketPrefabDetails pocket)
+        {
+            foreach (EdgeData edge in pocket.Edges)
+            {
+                Handles.DrawLine((Vector2)edge.right, (Vector2)edge.left, 1f);
+            }
+        }
     }
 }
