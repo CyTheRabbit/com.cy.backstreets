@@ -84,6 +84,7 @@ namespace Backstreets.Editor.FOVTool
             cmd.SetGlobalFloat("_HandleSize", 1);
             cmd.DrawMesh(fovMesh, Gizmos.matrix, HandleUtility.handleMaterial, 0, 0);
             Graphics.ExecuteCommandBuffer(cmd);
+            CommandBufferPool.Release(cmd);
         }
 
         private static readonly Color Purple = new(0.5f, 0.25f, 1f); 

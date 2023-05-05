@@ -141,6 +141,7 @@ namespace Editor.PocketEditor.CustomHandles
                 cmd.SetGlobalMatrix("_ObjectToWorld", matrix);
                 cmd.DrawMesh(Mesh, matrix, HandleUtility.handleMaterial, 0, 0);
                 Graphics.ExecuteCommandBuffer(cmd);
+                CommandBufferPool.Release(cmd);
             }
 
             internal static float DistanceToPointer(Line line)
