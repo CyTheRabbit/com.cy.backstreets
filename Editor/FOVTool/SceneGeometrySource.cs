@@ -1,12 +1,13 @@
 using System.Collections.Generic;
 using System.Linq;
 using Backstreets.Data;
+using Backstreets.FOV;
 using Backstreets.FOV.Geometry;
 using Backstreets.Pocket;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
-namespace Backstreets.FOV.Sandbox
+namespace Backstreets.Editor.FOVTool
 {
     internal class SceneGeometrySource : IGeometrySource
     {

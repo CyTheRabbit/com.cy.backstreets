@@ -2,7 +2,7 @@ using System;
 using Unity.Collections;
 using UnityEngine;
 
-namespace Backstreets.FOV.Sandbox
+namespace Backstreets.Editor.FOVTool
 {
     public static class FanMeshColoring
     {

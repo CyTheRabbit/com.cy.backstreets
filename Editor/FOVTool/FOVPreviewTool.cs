@@ -2,13 +2,13 @@ using Backstreets.Data;
 using Backstreets.FOV;
 using Backstreets.FOV.Geometry;
 using Backstreets.FOV.Jobs;
-using Backstreets.FOV.Sandbox;
 using Backstreets.Pocket;
 using Unity.Collections;
 using Unity.Jobs;
 using UnityEditor;
 using UnityEditor.EditorTools;
 using UnityEngine;
+using UnityEngine.Profiling;
 using UnityEngine.Rendering;
 
 namespace Backstreets.Editor.FOVTool
@@ -56,7 +56,9 @@ namespace Backstreets.Editor.FOVTool
 
             if (anchor.Update())
             {
+                Profiler.BeginSample("FOV Mesh Regeneration", this);
                 RegenerateMesh();
+                Profiler.EndSample();
             }
         }
 
@@ -77,7 +79,7 @@ namespace Backstreets.Editor.FOVTool
         private void DrawMesh()
         {
             Color color = Handles.color * new Color(1f, 1f, 1f, Handles.lighting ? 1f : 0.5f);
-            CommandBuffer cmd = CommandBufferPool.Get("Field of view");
+            CommandBuffer cmd = CommandBufferPool.Get("Visibility Preview");
             cmd.SetGlobalColor("_HandleColor", color);
             cmd.SetGlobalFloat("_HandleSize", 1);
             cmd.DrawMesh(fovMesh, Gizmos.matrix, HandleUtility.handleMaterial, 0, 0);
