@@ -1,11 +1,12 @@
+using Backstreets.FOV.Builder.SweepFilters;
+using Backstreets.FOV.Builder.SweepRecorders;
 using Backstreets.FOV.Geometry;
-using Backstreets.FOV.Jobs.SweepRecorders;
-using Backstreets.FOV.Jobs.SweepFilters;
+using Backstreets.FOV.Jobs;
 using Unity.Burst;
 using Unity.Collections;
 using Unity.Jobs;
 
-namespace Backstreets.FOV.Jobs
+namespace Backstreets.FOV.Builder
 {
     internal static class SweepLineOfSight<TRecorder, TFilter>
         where TRecorder : struct, ISweepRecorder

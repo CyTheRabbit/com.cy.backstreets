@@ -1,7 +1,7 @@
 using Backstreets.FOV.Geometry;
 using Unity.Collections;
 
-namespace Backstreets.FOV.Jobs.SweepRecorders
+namespace Backstreets.FOV.Builder.SweepRecorders
 {
     internal struct QueueRecorder : ISweepRecorder
     {
@@ -13,11 +13,6 @@ namespace Backstreets.FOV.Jobs.SweepRecorders
             this.bounds = bounds;
             currentBound = new Bound(line: default, InvalidEdgeIndex);
         }
-
-        public float RightLimit => -180;
-        public float LeftLimit => 180;
-
-        public bool ShouldProcess(Line line) => true;
 
         public void Start(in LineOfSight lineOfSight)
         {

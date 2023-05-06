@@ -1,15 +1,14 @@
 using System.Collections.Generic;
 using Backstreets.Data;
-using Backstreets.FOV.Builder;
+using Backstreets.FOV.Builder.SweepFilters;
+using Backstreets.FOV.Builder.SweepRecorders;
 using Backstreets.FOV.Geometry;
 using Backstreets.FOV.Jobs;
-using Backstreets.FOV.Jobs.SweepFilters;
-using Backstreets.FOV.Jobs.SweepRecorders;
 using Unity.Collections;
 using Unity.Jobs;
 using Unity.Mathematics;
 
-namespace Backstreets.FOV
+namespace Backstreets.FOV.Builder
 {
     public class FieldOfViewBuilder
     {

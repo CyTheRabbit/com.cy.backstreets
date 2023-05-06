@@ -1,6 +1,6 @@
 using Backstreets.FOV.Geometry;
 
-namespace Backstreets.FOV.Jobs.SweepFilters
+namespace Backstreets.FOV.Builder.SweepFilters
 {
     public readonly struct FullTurn : ISweepFilter
     {

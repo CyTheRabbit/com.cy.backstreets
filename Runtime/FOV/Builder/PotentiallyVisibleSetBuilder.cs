@@ -1,5 +1,6 @@
 using Backstreets.Data;
 using Backstreets.FOV.Geometry;
+using Backstreets.FOV.Utility;
 using Unity.Collections;
 
 namespace Backstreets.FOV.Builder

@@ -1,5 +1,6 @@
 using Backstreets.Data;
 using Backstreets.FOV;
+using Backstreets.FOV.Builder;
 using Backstreets.FOV.Geometry;
 using Backstreets.FOV.Jobs;
 using Backstreets.Pocket;

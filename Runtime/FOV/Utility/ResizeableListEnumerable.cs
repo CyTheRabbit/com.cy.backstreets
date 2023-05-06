@@ -1,6 +1,6 @@
 using Unity.Collections;
 
-namespace Backstreets.FOV
+namespace Backstreets.FOV.Utility
 {
     /// <summary>
     /// Allows to enumerate <see cref="NativeList{T}"/> while filling it with elements. Default enumerator gets

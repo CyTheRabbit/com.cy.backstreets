@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Backstreets.Data;
 using Backstreets.FOV;
+using Backstreets.FOV.Builder;
 using Backstreets.FOV.Geometry;
 using Backstreets.Pocket;
 using UnityEngine;

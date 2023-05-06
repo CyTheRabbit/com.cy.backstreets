@@ -1,7 +1,7 @@
 using Backstreets.FOV.Geometry;
 using Unity.Mathematics;
 
-namespace Backstreets.FOV.Jobs.SweepFilters
+namespace Backstreets.FOV.Builder.SweepFilters
 {
     public readonly struct PortalFilter : ISweepFilter
     {

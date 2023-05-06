@@ -1,8 +1,7 @@
-using Backstreets.FOV.Builder;
 using Backstreets.FOV.Geometry;
 using Unity.Collections;
 
-namespace Backstreets.FOV.Jobs.SweepRecorders
+namespace Backstreets.FOV.Builder.SweepRecorders
 {
     public struct QueuePortalSectorRecorder : ISweepSectorRecorder
     {

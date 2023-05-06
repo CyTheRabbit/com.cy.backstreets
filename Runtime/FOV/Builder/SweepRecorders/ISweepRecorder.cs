@@ -1,6 +1,6 @@
 using Backstreets.FOV.Geometry;
 
-namespace Backstreets.FOV.Jobs.SweepRecorders
+namespace Backstreets.FOV.Builder.SweepRecorders
 {
     internal interface ISweepRecorder
     {
