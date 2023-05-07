@@ -90,7 +90,7 @@ namespace Backstreets.Editor.FOVTool
 
             BuildRequest request = buildRequestTemplate;
             request.FieldOfView = fov;
-            FOVMeshBuilder.BuildMesh(request);
+            FOVMeshBuilder.Build(request);
         }
 
         private void DrawMesh()

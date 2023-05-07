@@ -1,5 +1,6 @@
 using Backstreets.FOV.Geometry;
 using Backstreets.FOV.MeshBuilder.Utility;
+using Unity.Burst;
 using Unity.Collections;
 using Unity.Jobs;
 using Unity.Mathematics;
@@ -31,6 +32,7 @@ namespace Backstreets.FOV.MeshBuilder.Handlers
             job.Run(context.Sectors.Length);
         }
 
+        [BurstCompile]
         private struct InitVerticesJob : IJobParallelFor
         {
             [ReadOnly] public NativeArray<BoundSector> Sectors;

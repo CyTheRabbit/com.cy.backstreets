@@ -4,17 +4,32 @@ using Backstreets.FOV.Geometry;
 using Backstreets.FOV.MeshBuilder.Handlers;
 using Unity.Collections;
 using UnityEngine;
+using UnityEngine.Profiling;
 using UnityEngine.Rendering;
 
 namespace Backstreets.FOV.MeshBuilder
 {
     internal struct FOVMeshBuilder
     {
+        public static void Build(BuildRequest request)
+        {
+            Profiler.BeginSample("Build FOV mesh");
+            {
+                FOVMeshBuilder builder = new(request);
+                builder.InitIndices();
+                builder.InitVertices();
+                builder.InitSubMeshes();
+                builder.Complete();
+            }
+            Profiler.EndSample();
+        }
+
+
         private MeshBuildingContext context;
         private readonly Mesh.MeshDataArray meshDataArray;
         private Mesh.MeshData meshData;
 
-        public FOVMeshBuilder(BuildRequest request)
+        private FOVMeshBuilder(BuildRequest request)
         {
             ref FieldOfView fov = ref request.FieldOfView;
             NativeArray<BoundSector> sectors = fov.GetAllBoundSectors(Allocator.TempJob);
@@ -24,15 +39,15 @@ namespace Backstreets.FOV.MeshBuilder
             context = new MeshBuildingContext(request, sectors);
         }
 
-        public void InitIndices() => IndicesHandler.InitIndices(ref context, ref meshData);
+        private void InitIndices() => IndicesHandler.InitIndices(ref context, ref meshData);
 
-        public void InitVertices()
+        private void InitVertices()
         {
             DeclareVertexAttributes();
             PopulateAttributeData();
         }
 
-        public void DeclareVertexAttributes()
+        private void DeclareVertexAttributes()
         {
             Dictionary<VertexAttribute, BuildRequest.AttributeType> attributeMappings = context.Request.Mappings;
             NativeList<VertexAttributeDescriptor> vertexBufferParams = new(attributeMappings.Count, Allocator.Temp);
@@ -46,7 +61,7 @@ namespace Backstreets.FOV.MeshBuilder
             vertexBufferParams.Dispose();
         }
 
-        public void PopulateAttributeData()
+        private void PopulateAttributeData()
         {
             Dictionary<VertexAttribute, BuildRequest.AttributeType> attributeMappings = context.Request.Mappings;
             foreach ((VertexAttribute output, BuildRequest.AttributeType attribute) in attributeMappings)
@@ -55,20 +70,20 @@ namespace Backstreets.FOV.MeshBuilder
             }
         }
 
-        public void InitSubMeshes()
+        private void InitSubMeshes()
         {
             meshData.subMeshCount = 1;
             meshData.SetSubMesh(0, new SubMeshDescriptor(indexStart: 0, context.IndexCount));
         }
 
-        public void Complete()
+        private void Complete()
         {
             Mesh.ApplyAndDisposeWritableMeshData(meshDataArray, context.Request.Mesh);
             context.Sectors.Dispose();
         }
 
 
-        private static readonly Dictionary<BuildRequest.AttributeType, IAttributeHandler> AttributeHandlers = new()
+        private static readonly Dictionary<BuildRequest.AttributeType, IAttributeHandler> AttributeHandlersCache = new()
         {
             { BuildRequest.AttributeType.Normal, new NormalHandler() },
             { BuildRequest.AttributeType.LocalPosition, new LocalPositionHandler() },
@@ -76,17 +91,7 @@ namespace Backstreets.FOV.MeshBuilder
             { BuildRequest.AttributeType.WorldPosition, new WorldPositionHandler() }
         };
 
-        public static void BuildMesh(BuildRequest request)
-        {
-            FOVMeshBuilder builder = new(request);
-
-            builder.InitIndices();
-            builder.InitVertices();
-            builder.InitSubMeshes();
-            builder.Complete();
-        }
-
         private static IAttributeHandler GetHandler(BuildRequest.AttributeType attribute) => 
-            AttributeHandlers[attribute] ?? throw new ArgumentOutOfRangeException();
+            AttributeHandlersCache[attribute] ?? throw new ArgumentOutOfRangeException();
     }
 }

@@ -1,4 +1,5 @@
 using Backstreets.FOV.MeshBuilder.Utility;
+using Unity.Burst;
 using Unity.Collections;
 using Unity.Jobs;
 using UnityEngine;
@@ -16,6 +17,7 @@ namespace Backstreets.FOV.MeshBuilder.Handlers
         }
 
 
+        [BurstCompile]
         private struct InitIndicesJob : IJobParallelFor
         {
             [WriteOnly] public NativeArray<QuadIndices> Output;

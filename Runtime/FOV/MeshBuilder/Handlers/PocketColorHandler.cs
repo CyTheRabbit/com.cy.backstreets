@@ -1,6 +1,7 @@
 using System;
 using Backstreets.Data;
 using Backstreets.FOV.Geometry;
+using Unity.Burst;
 using Unity.Collections;
 using Unity.Jobs;
 using UnityEngine;
@@ -40,6 +41,7 @@ namespace Backstreets.FOV.MeshBuilder.Handlers
             message: "Debug palette is necessary to produce pocket colors attribute");
 
 
+        [BurstCompile]
         private struct PocketColorsJob : IJobParallelFor
         {
             [ReadOnly] public NativeArray<BoundSector> Sectors;
