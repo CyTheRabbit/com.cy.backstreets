@@ -1,6 +1,8 @@
+using System.Collections.Generic;
 using Backstreets.Data;
 using Backstreets.FOV;
 using Backstreets.FOV.Builder;
+using Backstreets.FOV.MeshBuilder;
 using Backstreets.Pocket;
 using Unity.Collections;
 using UnityEditor;
@@ -21,6 +23,7 @@ namespace Backstreets.Editor.FOVTool
         private AnchorHandle anchor;
         private GUIContent icon;
         private SceneGeometrySource geometrySource;
+        private BuildRequest buildRequestTemplate;
 
         public override GUIContent toolbarIcon => icon;
 
@@ -42,6 +45,19 @@ namespace Backstreets.Editor.FOVTool
 
             fovMesh = new Mesh();
             fovMesh.MarkDynamic();
+
+            buildRequestTemplate = new BuildRequest
+            {
+                Mesh = fovMesh,
+                Mappings = new Dictionary<VertexAttribute, BuildRequest.AttributeType>
+                {
+                    [VertexAttribute.Position] = BuildRequest.AttributeType.WorldPosition,
+                    [VertexAttribute.Normal] = BuildRequest.AttributeType.Normal,
+                    [VertexAttribute.Color] =  BuildRequest.AttributeType.PocketColor,
+                    [VertexAttribute.TexCoord0] = BuildRequest.AttributeType.LocalPosition,
+                },
+                DebugPalette = geometrySource.DebugPalette,
+            };
 
             RegenerateMesh();
         }
@@ -72,12 +88,9 @@ namespace Backstreets.Editor.FOVTool
             fovBuilder.SetOrigin(anchor.Position, pocket);
             using FieldOfView fov = fovBuilder.Build(Allocator.TempJob).Complete(); // TODO: Complete the job during repaint event
 
-            using FOVMeshBuilder meshBuilder = new(fov);
-            meshBuilder.InitIndices().Complete();
-            meshBuilder.InitVertices().Complete();
-            meshBuilder.InitNormals().Complete();
-            meshBuilder.PaintPocketColors(geometrySource.DebugPalette).Complete();
-            meshBuilder.Build(fovMesh);
+            BuildRequest request = buildRequestTemplate;
+            request.FieldOfView = fov;
+            FOVMeshBuilder.BuildMesh(request);
         }
 
         private void DrawMesh()
