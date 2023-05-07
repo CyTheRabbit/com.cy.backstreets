@@ -1,51 +1,52 @@
-using Backstreets.Viewport;
+using Backstreets.FOV.Geometry;
 using NUnit.Framework;
-using UnityEngine;
+using Unity.Mathematics;
+using static Unity.Mathematics.math;
 
 namespace Backstreets.Tests
 {
     internal class IntersectionMathTests
     {
         [TestCaseSource(nameof(IntersectionTestcases))]
-        public void TestIntersections((ViewportLine a, ViewportLine b, Vector2? result) testcase)
+        public void TestIntersections((Line a, Line b, float2? result) testcase)
         {
-            Vector2? result = ViewportMath.GetIntersection(testcase.a, testcase.b);
+            float2? result = LineMath.GetIntersection(testcase.a, testcase.b);
             
             Assert.That(result, Is.EqualTo(testcase.result));
         }
 
-        private static readonly (ViewportLine a, ViewportLine b, Vector2? result)[] IntersectionTestcases =
+        private static readonly (Line a, Line b, float2? result)[] IntersectionTestcases =
         {
             (
-                a: A.Line(A.Point(0, 0), A.Point(1, 2)),
-                b: A.Line(A.Point(3, 0), A.Point(2, 2)),
-                result: new Vector2(1.5f, 3)
+                a: A.Line(float2(0, 0), float2(1, 2)),
+                b: A.Line(float2(3, 0), float2(2, 2)),
+                result: float2(1.5f, 3)
             ),
         };
 
         [TestCaseSource(nameof(ProjectionTestcases))]
-        public void TestProjectionFromOrigin((ViewportLine line, Vector2 direction, Vector2? result) testcase)
+        public void TestProjectionFromOrigin((Line line, float2 direction, float2? result) testcase)
         {
-            Vector2? result = ViewportMath.ProjectFromOrigin(testcase.line, testcase.direction);
+            float2? result = LineMath.ProjectFromOrigin(testcase.line, testcase.direction);
             
             Assert.That(result, Is.EqualTo(testcase.result));
         }
 
-        private static readonly (ViewportLine line, Vector2 direction, Vector2? result)[] ProjectionTestcases =
+        private static readonly (Line line, float2 direction, float2? result)[] ProjectionTestcases =
         {
             (
-                line: A.Line(A.Point(-1, 5), A.Point(10, 5)),
-                direction: new Vector2(0, 1),
-                result: new Vector2(0, 5)
+                line: A.Line(float2(-1, 5), float2(10, 5)),
+                direction: float2(0, 1),
+                result: float2(0, 5)
             ),
             (
-                line: A.Line(A.Point(-1, 5), A.Point(10, 5)),
-                direction: new Vector2(100, 100),
-                result: new Vector2(5, 5)
+                line: A.Line(float2(-1, 5), float2(10, 5)),
+                direction: float2(100, 100),
+                result: float2(5, 5)
             ),
             (
-                line: A.Line(A.Point(-1, 1), A.Point(1, 1)),
-                direction: new Vector2(1, 0),
+                line: A.Line(float2(-1, 1), float2(1, 1)),
+                direction: float2(1, 0),
                 result: null
             ),
         };

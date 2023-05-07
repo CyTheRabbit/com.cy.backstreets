@@ -1,28 +1,84 @@
 using System;
 using System.Linq;
 using Backstreets.Data;
+using Backstreets.FOV.Geometry;
+using Unity.Collections;
 using UnityEngine;
 using UnityEngine.Tilemaps;
 
-namespace DefaultNamespace
+namespace Backstreets.Pocket
 {
     public class PocketPrefabDetails : MonoBehaviour
     {
-        [SerializeField] private string _pocketID;
-        [SerializeField] private PortalData[] _portals = Array.Empty<PortalData>();
+        [SerializeField] private int pocketID;
+        [SerializeField] private Color debugColor;
+        [SerializeField] private EdgeData[] edges;
+        [SerializeField] private PortalData[] portals = Array.Empty<PortalData>();
         [SerializeField] private Bounds pocketBounds = default;
 
-        public string PocketID => _pocketID;
+        private PocketGeometry? runtimeGeometry;
 
-        public PortalData[] Portals => _portals;
+        public PocketGeometry RuntimeGeometry => runtimeGeometry ??= MakeRuntimeGeometry(Allocator.Persistent);
+
+        public PocketID PocketID => new(pocketID);
+
+        public Color DebugColor => debugColor;
+
+        public PortalData[] Portals => portals;
 
         public Bounds PocketBounds => pocketBounds;
 
         public Rect PocketRect => new(pocketBounds.min, pocketBounds.size);
 
-        private void OnValidate()
+        public EdgeData[] Edges
+        {
+            get => edges;
+            set => edges = value;
+        }
+
+        public Line? FindEdge(int id)
+        {
+            int index = Array.FindIndex(edges, edge => edge.id == id);
+            return index == -1 ? null : edges[index].Line;
+        }
+
+        public void OnValidate()
         {
             pocketBounds = CalculatePocketBounds();
+
+            runtimeGeometry?.Dispose();
+            runtimeGeometry = null;
+        }
+
+        public void OnDestroy()
+        {
+            runtimeGeometry?.Dispose();
+            runtimeGeometry = null;
+        }
+
+        private PocketGeometry MakeRuntimeGeometry(Allocator allocator)
+        {
+            PocketID id = new(pocketID);
+            PocketGeometry geometry = new(id, edges.Length, portals.Length, allocator);
+            using NativeParallelHashMap<int, int> edgeIdToIndex = new(edges.Length, Allocator.Temp);
+
+            for (int i = 0; i < edges.Length; i++)
+            {
+                EdgeData edgeData = edges[i];
+                edgeIdToIndex.Add(edgeData.id, i);
+                geometry.Edges[i] = edgeData.Line;
+            }
+
+            for (int i = 0; i < portals.Length; i++)
+            {
+                PortalData portalData = portals[i];
+                int edgeIndex = edgeIdToIndex[portalData.edgeID];
+                Line edge = geometry.Edges[edgeIndex];
+                PocketID exit = new(portalData.exitID);
+                geometry.Portals[i] = new Portal(edge, edgeIndex, entrance: id, exit);
+            }
+
+            return geometry;
         }
 
         private Bounds CalculatePocketBounds()

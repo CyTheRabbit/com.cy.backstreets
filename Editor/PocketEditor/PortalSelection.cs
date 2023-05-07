@@ -1,4 +1,4 @@
-using DefaultNamespace;
+using Backstreets.Pocket;
 using UnityEditor;
 using UnityEngine;
 
@@ -9,22 +9,16 @@ namespace Editor.PocketEditor
         [SerializeField] private PocketPrefabDetails owner;
         [SerializeField] private int portalIndex;
 
-        public Vector2 Position
+        public int EdgeID
         {
-            get => owner.Portals[portalIndex].position;
-            set => owner.Portals[portalIndex].position = value;
+            get => owner.Portals[portalIndex].edgeID;
+            set => owner.Portals[portalIndex].edgeID = value;
         }
 
-        public float Rotation
+        public int ExitID
         {
-            get => owner.Portals[portalIndex].rotation;
-            set => owner.Portals[portalIndex].rotation = value;
-        }
-
-        public float Scale
-        {
-            get => owner.Portals[portalIndex].width;
-            set => owner.Portals[portalIndex].width = value;
+            get => owner.Portals[portalIndex].exitID;
+            set => owner.Portals[portalIndex].exitID = value;
         }
 
 
