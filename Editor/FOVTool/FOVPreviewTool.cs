@@ -11,15 +11,16 @@ namespace Backstreets.Editor.FOVTool
     public class FOVPreviewTool : EditorTool
     {
         [SerializeField] private Texture2D anchorIcon;
-        private GUIContent icon;
+        private GUIContent guiToolbarIcon;
         private FOVPreviewController controller = null;
 
-        public override GUIContent toolbarIcon => icon;
-        public GUIContent AnchorIcon => icon;
+        public override GUIContent toolbarIcon => guiToolbarIcon;
+        public GUIContent AnchorIcon { get; private set; }
 
         private void OnEnable()
         {
-            icon = new GUIContent(anchorIcon, "Visibility Preview");
+            guiToolbarIcon = new GUIContent(anchorIcon, "Visibility Preview");
+            AnchorIcon = new GUIContent(anchorIcon);
         }
 
         public override void OnActivated()

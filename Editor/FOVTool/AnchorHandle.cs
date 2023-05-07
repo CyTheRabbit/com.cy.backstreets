@@ -11,7 +11,7 @@ namespace Backstreets.Editor.FOVTool
         public AnchorHandle(Vector2 position, GUIContent icon)
         {
             Position = position;
-            this.icon = new GUIContent(icon) {tooltip = null};
+            this.icon = icon;
         }
 
         public bool Update()

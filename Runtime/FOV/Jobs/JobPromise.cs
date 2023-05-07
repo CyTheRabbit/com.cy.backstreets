@@ -5,6 +5,11 @@ using UnityEngine;
 
 namespace Backstreets.FOV.Jobs
 {
+    /// <summary>
+    /// Basically a variant of <see cref="System.Threading.Tasks.Task{T}"/> adopted to Unity jobs system. JobPromise
+    /// has exposed <see cref="Result"/> value to allow consequent jobs to references promised resources.
+    /// </summary>
+    /// <seealso cref="ReusePromise{T}"/>
     public struct JobPromise<T> : INativeDisposable where T : struct, INativeDisposable
     {
         public JobHandle Handle;
@@ -23,8 +28,8 @@ namespace Backstreets.FOV.Jobs
         public bool CanScheduleJobs => HasStatus(Status.OwnsMemory);
 
         /// <summary>
-        /// Value allocated for the result of the promise. Should be used to read buffers size and to pass buffers to
-        /// jobs.
+        /// Value allocated for the result of the promise. Should be used to read buffer sizes and to pass native
+        /// resources to the following jobs.
         /// </summary>
         public T Result => result;
 

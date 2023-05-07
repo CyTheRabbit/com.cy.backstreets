@@ -21,7 +21,7 @@ namespace Backstreets.FOV.Jobs
             Value = value;
         }
 
-        public void Dispose() => Value.Dispose();
+        public void Dispose() => Value.Dispose(Handle);
 
         public static implicit operator JobHandle(ReusePromise<T> promise) => promise.Handle;
     }

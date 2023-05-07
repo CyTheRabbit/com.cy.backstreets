@@ -40,7 +40,7 @@ namespace Backstreets.FOV.Jobs
         
         [BurstCompatible]
         [SuppressMessage("ReSharper", "NotAccessedField.Local", 
-            Justification = "This struct is used to make Burst happy. Burst is not happy if you map array elements with different indexes in IJobParallelFor.")]
+            Justification = "Used only to produce multiple elements in a single iteration of a job.")]
         private readonly struct CornerPair
         {
             private readonly Corner right;
