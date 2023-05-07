@@ -1,11 +1,8 @@
 using Backstreets.Data;
 using Backstreets.FOV;
 using Backstreets.FOV.Builder;
-using Backstreets.FOV.Geometry;
-using Backstreets.FOV.Jobs;
 using Backstreets.Pocket;
 using Unity.Collections;
-using Unity.Jobs;
 using UnityEditor;
 using UnityEditor.EditorTools;
 using UnityEngine;
@@ -23,6 +20,7 @@ namespace Backstreets.Editor.FOVTool
         private PocketID pocket;
         private AnchorHandle anchor;
         private GUIContent icon;
+        private SceneGeometrySource geometrySource;
 
         public override GUIContent toolbarIcon => icon;
 
@@ -39,7 +37,7 @@ namespace Backstreets.Editor.FOVTool
             pocket = targetComponent.PocketID;
             anchor = new AnchorHandle(anchorPosition, icon);
 
-            IGeometrySource geometrySource = new SceneGeometrySource(targetComponent.gameObject.scene);
+            geometrySource = new SceneGeometrySource(targetComponent.gameObject.scene);
             fovBuilder = new FieldOfViewBuilder(geometrySource);
 
             fovMesh = new Mesh();
@@ -65,6 +63,7 @@ namespace Backstreets.Editor.FOVTool
 
         public override void OnWillBeDeactivated()
         {
+            geometrySource.Dispose();
             DestroyImmediate(fovMesh);
         }
 
@@ -72,9 +71,13 @@ namespace Backstreets.Editor.FOVTool
         {
             fovBuilder.SetOrigin(anchor.Position, pocket);
             using FieldOfView fov = fovBuilder.Build(Allocator.TempJob).Complete(); // TODO: Complete the job during repaint event
-            using FanMeshData meshData = ScheduleMeshGeneration(fov).Complete();
-            meshData.Apply(fovMesh);
-            FanMeshColoring.SetColor(fovMesh, DefaultPalette);
+
+            using FOVMeshBuilder meshBuilder = new(fov);
+            meshBuilder.InitIndices().Complete();
+            meshBuilder.InitVertices().Complete();
+            meshBuilder.InitNormals().Complete();
+            meshBuilder.PaintPocketColors(geometrySource.DebugPalette).Complete();
+            meshBuilder.Build(fovMesh);
         }
 
         private void DrawMesh()
@@ -86,25 +89,6 @@ namespace Backstreets.Editor.FOVTool
             cmd.DrawMesh(fovMesh, Gizmos.matrix, HandleUtility.handleMaterial, 0, 0);
             Graphics.ExecuteCommandBuffer(cmd);
             CommandBufferPool.Release(cmd);
-        }
-
-        private static readonly Color Purple = new(0.5f, 0.25f, 1f); 
-        private static FanMeshColoring.Palette DefaultPalette =>
-            new FanMeshColoring.Palette
-            {
-                origin = Color.white,
-                odd = Purple,
-                even = Purple,
-            }.Alpha(0.3f);
-
-        private static JobPromise<FanMeshData> ScheduleMeshGeneration(FieldOfView fov)
-        {
-            FanMeshData meshData = new(fov.BoundsLength, Allocator.TempJob);
-            NativeArray<BoundSector> sectors = fov.GetAllBoundSectors(Allocator.TempJob);
-            BuildMeshDataJob job = new(sectors, fov.Space, meshData);
-            JobHandle handle = job.Schedule();
-            sectors.Dispose(handle);
-            return new JobPromise<FanMeshData>(handle, meshData);
         }
     }
 }

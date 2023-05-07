@@ -11,6 +11,7 @@ namespace Backstreets.Pocket
     public class PocketPrefabDetails : MonoBehaviour
     {
         [SerializeField] private int pocketID;
+        [SerializeField] private Color debugColor;
         [SerializeField] private EdgeData[] edges;
         [SerializeField] private PortalData[] portals = Array.Empty<PortalData>();
         [SerializeField] private Bounds pocketBounds = default;
@@ -20,6 +21,8 @@ namespace Backstreets.Pocket
         public PocketGeometry RuntimeGeometry => runtimeGeometry ??= MakeRuntimeGeometry(Allocator.Persistent);
 
         public PocketID PocketID => new(pocketID);
+
+        public Color DebugColor => debugColor;
 
         public PortalData[] Portals => portals;
 

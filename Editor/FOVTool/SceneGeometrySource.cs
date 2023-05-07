@@ -1,10 +1,10 @@
 using System.Collections.Generic;
 using System.Linq;
 using Backstreets.Data;
-using Backstreets.FOV;
 using Backstreets.FOV.Builder;
 using Backstreets.FOV.Geometry;
 using Backstreets.Pocket;
+using Unity.Collections;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -13,22 +13,32 @@ namespace Backstreets.Editor.FOVTool
     internal class SceneGeometrySource : IGeometrySource
     {
         private PocketPrefabDetails[] scenePockets;
+        private NativeParallelHashMap<PocketID, Color> debugPalette;
         private readonly IEnumerable<PocketPrefabDetails> scenePocketsSource;
         private float lastFetchTime;
 
         public SceneGeometrySource(Scene scene)
         {
             scenePocketsSource = FetchScenePockets(scene);
+
+            debugPalette = new NativeParallelHashMap<PocketID, Color>(capacity: 64, Allocator.Persistent);
         }
 
         private PocketPrefabDetails[] ScenePockets
         {
             get
             {
-                if (Time.realtimeSinceStartup < lastFetchTime + FetchLifetime) return scenePockets;
+                FetchIfNeeded();
+                return scenePockets;
+            }
+        }
 
-                lastFetchTime = Time.realtimeSinceStartup;
-                return scenePockets = scenePocketsSource.ToArray();
+        public NativeParallelHashMap<PocketID, Color> DebugPalette
+        {
+            get
+            {
+                FetchIfNeeded();
+                return debugPalette;
             }
         }
 
@@ -36,6 +46,11 @@ namespace Backstreets.Editor.FOVTool
         {
             PocketPrefabDetails pocket = FindPocket(pocketID);
             return pocket == null ? PocketGeometry.Nothing(pocketID) : pocket.RuntimeGeometry;
+        }
+
+        public void Dispose()
+        {
+            debugPalette.Dispose();
         }
 
         private PocketPrefabDetails FindPocket(PocketID pocketID)
@@ -46,6 +61,24 @@ namespace Backstreets.Editor.FOVTool
             }
 
             return null;
+        }
+
+        private void FetchIfNeeded()
+        {
+            if (Time.realtimeSinceStartup < lastFetchTime + FetchLifetime) return;
+            lastFetchTime = Time.realtimeSinceStartup;
+
+            {
+                scenePockets = scenePocketsSource.ToArray();
+            }
+
+            {
+                debugPalette.Clear();
+                foreach (PocketPrefabDetails pocket in scenePockets)
+                {
+                    debugPalette.Add(pocket.PocketID, pocket.DebugColor);
+                }
+            }
         }
 
 
