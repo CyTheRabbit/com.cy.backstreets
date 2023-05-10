@@ -21,7 +21,6 @@ namespace Backstreets.Editor.FOVTool
             Vector2 oldPosition = Position;
             Position = Handles.FreeMoveHandle(
                 position: Position,
-                rotation: Handles.matrix.rotation,
                 size: AnchorSize,
                 snap: Vector3.zero,
                 capFunction: Handles.CircleHandleCap);
