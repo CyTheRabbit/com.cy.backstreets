@@ -2,7 +2,7 @@ using Backstreets.Pocket;
 using UnityEditor;
 using UnityEngine;
 
-namespace Editor.PocketEditor
+namespace Backstreets.Editor.PocketEditor
 {
     public class PortalSelection : ScriptableObject
     {

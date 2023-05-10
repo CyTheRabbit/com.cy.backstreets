@@ -5,7 +5,7 @@ using UnityEditor;
 using UnityEngine;
 using UnityEngine.Rendering;
 
-namespace Editor.PocketEditor.CustomHandles
+namespace Backstreets.Editor.PocketEditor.CustomHandles
 {
     public static class PortalHandle
     {

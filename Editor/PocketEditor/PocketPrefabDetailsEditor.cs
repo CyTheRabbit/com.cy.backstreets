@@ -1,10 +1,10 @@
 using Backstreets.Data;
 using Backstreets.Pocket;
-using Editor.PocketEditor.CustomHandles;
+using Backstreets.Editor.PocketEditor.CustomHandles;
 using UnityEditor;
 using UnityEngine;
 
-namespace Editor.PocketEditor
+namespace Backstreets.Editor.PocketEditor
 {
     [CustomEditor(typeof(PocketPrefabDetails))]
     public class PocketPrefabDetailsEditor : UnityEditor.Editor
