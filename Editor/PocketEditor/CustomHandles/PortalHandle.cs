@@ -125,7 +125,8 @@ namespace Backstreets.Editor.PocketEditor.CustomHandles
 
             internal static float DistanceToPointer(Line line)
             {
-                using Handles.DrawingScope matrixScope = new(MakeLineMatrixStretched(line));
+                Matrix4x4 matrix = MakeLineMatrixStretched(line) * Matrix4x4.Scale(new Vector3(1, Depth, 1));
+                using Handles.DrawingScope matrixScope = new(matrix);
                 return HandleUtility.DistanceToRectangle(Vector3.down / 2, Quaternion.identity, 0.5f);
             }
         }
