@@ -1,6 +1,6 @@
-using Backstreets.Data;
+using System;
 using Backstreets.Pocket;
-using Backstreets.Editor.PocketEditor.CustomHandles;
+using Backstreets.Editor.PocketEditor.View;
 using UnityEditor;
 using UnityEngine;
 
@@ -9,49 +9,39 @@ namespace Backstreets.Editor.PocketEditor
     [CustomEditor(typeof(PocketPrefabDetails))]
     public class PocketPrefabDetailsEditor : UnityEditor.Editor
     {
+        private PocketGeometryView view;
+        private PocketPrefabDetails Pocket => (PocketPrefabDetails)target;
+
+
+        private void OnEnable()
+        {
+            view = new PocketGeometryView(Pocket);
+        }
+
         private void OnSceneGUI()
         {
-            PocketPrefabDetails pocket = (PocketPrefabDetails)target;
-            for (int i = 0; i < pocket.Portals.Length; i++)
+            GeometryID pick = view.Pick();
+            view.Draw(mask: GeometryType.Everything);
+
+            bool isLeftMouseClick = Event.current is { type: EventType.MouseDown, button: 0 };
+            if (pick is { Type: GeometryType.Portal, ID: var portalID } && isLeftMouseClick)
             {
-                PortalData portal = pocket.Portals[i];
-                if (pocket.FindEdge(portal.edgeID) is not { } portalLine) continue;
-                if (PortalHandle.Clickable(portalLine, HandleColor, 2f))
-                {
-                    PortalSelection.Focus(pocket, i);
-                }
+                int portalIndex = Array.FindIndex(Pocket.Portals, portal => portal.edgeID == portalID);
+                PortalSelection.Focus(Pocket, portalIndex);
             }
         }
 
         [DrawGizmo(GizmoType.NonSelected, typeof(PocketPrefabDetails))]
         public static void DrawGizmo(PocketPrefabDetails pocket, GizmoType gizmoType)
         {
-            foreach (PortalData portal in pocket.Portals)
-            {
-                if (pocket.FindEdge(portal.edgeID) is not { } portalLine) continue;
-                PortalHandle.Static(portalLine, InactiveColor, 1f);
-            }
-
-            DrawEdges(pocket);
-            Handles.DrawSolidRectangleWithOutline(pocket.PocketRect, Color.clear, Color.red);
+            new PocketGeometryView(pocket).Draw();
         }
 
         [DrawGizmo(GizmoType.Active | GizmoType.Selected, typeof(PocketPrefabDetails))]
         public static void DrawGizmoActive(PocketPrefabDetails pocket, GizmoType gizmoType)
         {
-            DrawEdges(pocket);
-            Handles.DrawSolidRectangleWithOutline(pocket.PocketRect, Color.clear, Color.red);
-        }
-
-        private static readonly Color HandleColor = Color.cyan;
-        private static readonly Color InactiveColor = Color.blue;
-
-        private static void DrawEdges(PocketPrefabDetails pocket)
-        {
-            foreach (EdgeData edge in pocket.Edges)
-            {
-                Handles.DrawLine((Vector2)edge.right, (Vector2)edge.left, 1f);
-            }
+            // Workaround: unless drawer for selected gizmos is specified, non-selected gizmos will not activate after
+            // lose of focus.
         }
     }
 }

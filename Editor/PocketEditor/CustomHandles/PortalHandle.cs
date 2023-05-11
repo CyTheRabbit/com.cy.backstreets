@@ -15,31 +15,10 @@ namespace Backstreets.Editor.PocketEditor.CustomHandles
 
             Draw(line, color ?? Handles.color, thickness ?? 0);
         }
-        
-        public static bool Clickable(Line line, Color? color, float? thickness)
-        {
-            int controlID = GUIUtility.GetControlID(ControlHint, FocusType.Passive);
-            HandleUtility.AddControl(controlID, Glow.DistanceToPointer(line));
-            HandleUtility.AddControl(controlID, Arrow.DistanceToPointer(line));
 
-            bool isHovered = HandleUtility.nearestControl == controlID;
-            switch (Event.current.GetTypeForControl(controlID))
-            {
-                case EventType.Repaint:
-                    Draw(line, isHovered ? Color.white : color ?? Handles.color, thickness ?? 0);
-                    return false;
-                case EventType.MouseDown when isHovered:
-                    GUIUtility.hotControl = controlID;
-                    Event.current.Use();
-                    return false;
-                case EventType.MouseUp when isHovered && GUIUtility.hotControl == controlID:
-                    GUIUtility.hotControl = 0;
-                    Event.current.Use();
-                    return true;
-                default:
-                    return false;
-            }
-        }
+        public static float DistanceToPortal(Line line) => math.min(
+            Glow.DistanceToPointer(line),
+            Arrow.DistanceToPointer(line));
 
         private static void Draw(Line line, Color color, float thickness)
         {
