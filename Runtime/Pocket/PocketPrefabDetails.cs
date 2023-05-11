@@ -12,7 +12,7 @@ namespace Backstreets.Pocket
     {
         [SerializeField] private int pocketID;
         [SerializeField] private Color debugColor;
-        [SerializeField] private EdgeData[] edges;
+        [SerializeField] private EdgeData[] edges = Array.Empty<EdgeData>();
         [SerializeField] private PortalData[] portals = Array.Empty<PortalData>();
         [SerializeField] private Bounds pocketBounds = default;
 
