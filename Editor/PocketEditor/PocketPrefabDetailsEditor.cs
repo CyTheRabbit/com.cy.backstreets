@@ -34,7 +34,7 @@ namespace Backstreets.Editor.PocketEditor
         [DrawGizmo(GizmoType.NonSelected, typeof(PocketPrefabDetails))]
         public static void DrawGizmo(PocketPrefabDetails pocket, GizmoType gizmoType)
         {
-            new PocketGeometryView(pocket).Draw();
+            new PocketGeometryView(pocket) { Palette = DesaturatedPalette }.Draw();
         }
 
         [DrawGizmo(GizmoType.Active | GizmoType.Selected, typeof(PocketPrefabDetails))]
@@ -43,5 +43,15 @@ namespace Backstreets.Editor.PocketEditor
             // Workaround: unless drawer for selected gizmos is specified, non-selected gizmos will not activate after
             // lose of focus.
         }
+
+        private static readonly Color LightGrey = Color.Lerp(Color.grey, Color.white, 0.5f);
+
+        private static readonly Palette DesaturatedPalette = new()
+        {
+            EdgeColor = LightGrey,
+            BoundsColor = Color.red,
+            HotColor = Color.white,
+            PortalColor = Color.grey,
+        };
     }
 }

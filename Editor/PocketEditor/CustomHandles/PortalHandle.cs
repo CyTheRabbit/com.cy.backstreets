@@ -45,8 +45,6 @@ namespace Backstreets.Editor.PocketEditor.CustomHandles
                    Matrix4x4.Scale(new Vector3(width, 1, 1));
         }
 
-        private static readonly int ControlHint = "PortalHandle".GetHashCode();
-
         private static class Arrow
         {
             private static readonly (Vector3 p1, Vector3 p2)[] Lines;
