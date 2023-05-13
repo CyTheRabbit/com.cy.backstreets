@@ -10,26 +10,24 @@ namespace Backstreets.Editor.PocketEditor.View
     public struct PocketGeometryView
     {
         private readonly PocketPrefabDetails pocket;
+        private readonly IViewController controller;
         private int controlID;
         private GeometryID hotGeometry;
         private GeometryID nearestGeometry;
 
-        public PocketGeometryView(PocketPrefabDetails pocket)
+        public PocketGeometryView(PocketPrefabDetails pocket, IViewController controller = null)
         {
             controlID = -1;
             this.pocket = pocket;
+            this.controller = controller ?? DefaultViewController.Instance;
             Palette = Palette.Default;
-            DrawMask = GeometryType.Everything;
-            PickMask = GeometryType.Everything;
             hotGeometry = GeometryID.None;
             nearestGeometry = GeometryID.None;
         }
 
         public Palette Palette { get; set; }
-        public GeometryType DrawMask { get; set; }
-        public GeometryType PickMask { get; set; }
 
-        public void Process(Event @event, InteractionDelegate onInteraction)
+        public void Process(Event @event)
         {
             controlID = GUIUtility.GetControlID(ControlHint, FocusType.Passive);
             bool isHot = GUIUtility.hotControl == controlID;
@@ -38,7 +36,7 @@ namespace Backstreets.Editor.PocketEditor.View
             {
                 case { type: EventType.MouseMove or EventType.Layout }:
                 {
-                    (GeometryID ID, float Distance) best = FindNearest(PickMask);
+                    (GeometryID ID, float Distance) best = FindNearest(controller.PickMask);
                     HandleUtility.AddControl(controlID, best.Distance);
                     nearestGeometry = best.ID;
                     if (hotGeometry != nearestGeometry) hotGeometry = GeometryID.None;
@@ -48,13 +46,13 @@ namespace Backstreets.Editor.PocketEditor.View
                 {
                     GUIUtility.hotControl = controlID;
                     hotGeometry = nearestGeometry;
-                    onInteraction(@event, hotGeometry);
+                    controller.OnViewEvent(@event, hotGeometry);
                     Event.current.Use();
                     break;
                 }
                 case { type: EventType.MouseUp, button: 0 or 2 } when isHot:
                 {
-                    onInteraction(@event, hotGeometry);
+                    controller.OnViewEvent(@event, hotGeometry);
                     GUIUtility.hotControl = 0;
                     hotGeometry = GeometryID.None;
                     Event.current.Use();
@@ -64,12 +62,12 @@ namespace Backstreets.Editor.PocketEditor.View
                 case { type: EventType.Repaint }:
                 {
                     Draw();
-                    onInteraction(@event, hotGeometry);
+                    controller.OnViewEvent(@event, hotGeometry);
                     break;
                 }
                 case { type: not (EventType.Ignore or EventType.Used) } when isHot:
                 {
-                    onInteraction(@event, hotGeometry);
+                    controller.OnViewEvent(@event, hotGeometry);
                     Event.current.Use();
                     break;
                 }
@@ -78,9 +76,10 @@ namespace Backstreets.Editor.PocketEditor.View
 
         public void Draw()
         {
-            if ((DrawMask & GeometryType.Edge) != 0) DrawEdges();
-            if ((DrawMask & GeometryType.Portal) != 0) DrawPortals();
-            if ((DrawMask & GeometryType.Bounds) != 0) DrawBounds();
+            GeometryType mask = controller.DrawMask;
+            if ((mask & GeometryType.Edge) != 0) DrawEdges();
+            if ((mask & GeometryType.Portal) != 0) DrawPortals();
+            if ((mask & GeometryType.Bounds) != 0) DrawBounds();
         }
 
 
@@ -170,8 +169,5 @@ namespace Backstreets.Editor.PocketEditor.View
             using var matrixScope = new Handles.DrawingScope(matrix);
             return HandleUtility.DistanceToRectangle(Vector2.one / 2, Quaternion.identity, 1);
         }
-
-
-        public delegate void InteractionDelegate(Event @event, GeometryID hotGeometry);
     }
 }

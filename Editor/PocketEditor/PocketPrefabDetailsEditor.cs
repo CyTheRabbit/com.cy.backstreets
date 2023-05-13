@@ -7,25 +7,25 @@ using UnityEngine;
 namespace Backstreets.Editor.PocketEditor
 {
     [CustomEditor(typeof(PocketPrefabDetails))]
-    public class PocketPrefabDetailsEditor : UnityEditor.Editor
+    public class PocketPrefabDetailsEditor : UnityEditor.Editor, IViewController
     {
         private PocketGeometryView view;
-        private PocketGeometryView.InteractionDelegate onViewInteraction;
         private PocketPrefabDetails Pocket => (PocketPrefabDetails)target;
+        GeometryType IViewController.DrawMask => GeometryType.Everything;
+        GeometryType IViewController.PickMask => GeometryType.Everything;
 
 
         private void OnEnable()
         {
-            view = new PocketGeometryView(Pocket);
-            onViewInteraction = OnViewGUI;
+            view = new PocketGeometryView(Pocket, controller: this);
         }
 
         private void OnSceneGUI()
         {
-            view.Process(Event.current, onViewInteraction);
+            view.Process(Event.current);
         }
 
-        private void OnViewGUI(Event @event, GeometryID hotGeometry)
+        void IViewController.OnViewEvent(Event @event, GeometryID hotGeometry)
         {
             bool isLeftMouseClick = @event is { type: EventType.MouseUp, button: 0 };
             if (hotGeometry is { Type: GeometryType.Portal, ID: var portalID } && isLeftMouseClick)
