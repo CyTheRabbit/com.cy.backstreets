@@ -20,7 +20,7 @@ namespace Backstreets.Editor.PocketEditor.Tool
 
         public GeometryType DrawMask => GeometryType.Everything;
 
-        public GeometryType PickMask => GeometryType.Portal;
+        public GeometryType PickMask => GeometryType.Edge | GeometryType.Portal;
 
         public void OnViewEvent(Event @event, GeometryID hotGeometry)
         {
@@ -38,6 +38,9 @@ namespace Backstreets.Editor.PocketEditor.Tool
             {
                 case GeometryType.None:
                     GUILayout.Label("Click geometry to start inspection");
+                    break;
+                case GeometryType.Edge:
+                    DrawEdgeInspector();
                     break;
                 case GeometryType.Portal:
                     DrawPortalInspector();
@@ -72,6 +75,35 @@ namespace Backstreets.Editor.PocketEditor.Tool
             {
                 pocket.Portals[portalIndex] = portalData;
                 inspectedGeometry = GeometryID.Of(portalData);
+                EditorUtility.SetDirty(pocket);
+            }
+        }
+
+        private void DrawEdgeInspector()
+        {
+            int edgeIndex = Array.FindIndex(pocket.Edges, edge => edge.id == inspectedGeometry.ID);
+            if (edgeIndex < 0)
+            {
+                GUILayout.Label("Unknown Edge");
+                return;
+            }
+
+            using EditorGUI.ChangeCheckScope check = new();
+
+            EdgeData edgeData = pocket.Edges[edgeIndex];
+            edgeData.id = EditorGUILayout.IntField("Edge ID", edgeData.id);
+            edgeData.right = EditorGUILayout.Vector2Field("Right", edgeData.right);
+            edgeData.left = EditorGUILayout.Vector2Field("Left", edgeData.left);
+
+            if (GUILayout.Button("Flip left and right"))
+            {
+                (edgeData.right, edgeData.left) = (edgeData.left, edgeData.right);
+            }
+
+            if (check.changed)
+            {
+                pocket.Edges[edgeIndex] = edgeData;
+                inspectedGeometry = GeometryID.Of(edgeData);
                 EditorUtility.SetDirty(pocket);
             }
         }
