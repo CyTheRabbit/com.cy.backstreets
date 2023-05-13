@@ -10,21 +10,25 @@ namespace Backstreets.Editor.PocketEditor
     public class PocketPrefabDetailsEditor : UnityEditor.Editor
     {
         private PocketGeometryView view;
+        private PocketGeometryView.InteractionDelegate onViewInteraction;
         private PocketPrefabDetails Pocket => (PocketPrefabDetails)target;
 
 
         private void OnEnable()
         {
             view = new PocketGeometryView(Pocket);
+            onViewInteraction = OnViewGUI;
         }
 
         private void OnSceneGUI()
         {
-            GeometryID pick = view.Pick();
-            view.Draw(mask: GeometryType.Everything);
+            view.Process(Event.current, onViewInteraction);
+        }
 
-            bool isLeftMouseClick = Event.current is { type: EventType.MouseDown, button: 0 };
-            if (pick is { Type: GeometryType.Portal, ID: var portalID } && isLeftMouseClick)
+        private void OnViewGUI(Event @event, GeometryID hotGeometry)
+        {
+            bool isLeftMouseClick = @event is { type: EventType.MouseUp, button: 0 };
+            if (hotGeometry is { Type: GeometryType.Portal, ID: var portalID } && isLeftMouseClick)
             {
                 int portalIndex = Array.FindIndex(Pocket.Portals, portal => portal.edgeID == portalID);
                 PortalSelection.Focus(Pocket, portalIndex);

@@ -11,62 +11,78 @@ namespace Backstreets.Editor.PocketEditor.View
     {
         private readonly PocketPrefabDetails pocket;
         private int controlID;
+        private GeometryID hotGeometry;
+        private GeometryID nearestGeometry;
 
         public PocketGeometryView(PocketPrefabDetails pocket)
         {
             controlID = -1;
             this.pocket = pocket;
             Palette = Palette.Default;
-            NearestGeometry = GeometryID.None;
+            DrawMask = GeometryType.Everything;
+            PickMask = GeometryType.Everything;
+            hotGeometry = GeometryID.None;
+            nearestGeometry = GeometryID.None;
         }
 
         public Palette Palette { get; set; }
-        public GeometryID NearestGeometry { get; private set; }
+        public GeometryType DrawMask { get; set; }
+        public GeometryType PickMask { get; set; }
 
-        public GeometryID Pick(GeometryType mask = GeometryType.Everything)
+        public void Process(Event @event, InteractionDelegate onInteraction)
         {
-            (GeometryID Selection, float Distance) best = (GeometryID.None, float.PositiveInfinity);
-
-            void Contest(GeometryID selection, float distance)
-            {
-                if (distance <= best.Distance) best = (selection, distance);
-            }
-
-            if ((mask & GeometryType.Edge) != 0)
-            {
-                foreach (EdgeData edge in pocket.Edges)
-                {
-                    Contest(GeometryID.Of(edge), DistanceToEdge(edge));
-                }
-            }
-
-            if ((mask & GeometryType.Portal) != 0)
-            {
-                foreach (PortalData portal in pocket.Portals)
-                {
-                    if (pocket.FindEdge(portal.edgeID) is not { } portalLine) continue;
-
-                    Contest(GeometryID.Of(portal), PortalHandle.DistanceToPortal(portalLine));
-                }
-            }
-
-            if ((mask & GeometryType.Bounds) != 0)
-            {
-                Contest(GeometryID.OfBounds(), DistanceToRectangle(pocket.PocketRect));
-            }
-
             controlID = GUIUtility.GetControlID(ControlHint, FocusType.Passive);
-            HandleUtility.AddControl(controlID, best.Distance);
+            bool isHot = GUIUtility.hotControl == controlID;
             bool isNearest = HandleUtility.nearestControl == controlID;
-            return NearestGeometry = isNearest ? best.Selection : GeometryID.None;
+            switch (@event)
+            {
+                case { type: EventType.MouseMove or EventType.Layout }:
+                {
+                    (GeometryID ID, float Distance) best = FindNearest(PickMask);
+                    HandleUtility.AddControl(controlID, best.Distance);
+                    nearestGeometry = best.ID;
+                    if (hotGeometry != nearestGeometry) hotGeometry = GeometryID.None;
+                    break;
+                }
+                case { type: EventType.MouseDown, button: 0 or 2 } when isNearest:
+                {
+                    GUIUtility.hotControl = controlID;
+                    hotGeometry = nearestGeometry;
+                    onInteraction(@event, hotGeometry);
+                    Event.current.Use();
+                    break;
+                }
+                case { type: EventType.MouseUp, button: 0 or 2 } when isHot:
+                {
+                    onInteraction(@event, hotGeometry);
+                    GUIUtility.hotControl = 0;
+                    hotGeometry = GeometryID.None;
+                    Event.current.Use();
+                    break;
+                }
+
+                case { type: EventType.Repaint }:
+                {
+                    Draw();
+                    onInteraction(@event, hotGeometry);
+                    break;
+                }
+                case { type: not (EventType.Ignore or EventType.Used) } when isHot:
+                {
+                    onInteraction(@event, hotGeometry);
+                    Event.current.Use();
+                    break;
+                }
+            }
         }
 
-        public void Draw(GeometryType mask = GeometryType.Everything)
+        public void Draw()
         {
-            if ((mask & GeometryType.Edge) != 0) DrawEdges();
-            if ((mask & GeometryType.Portal) != 0) DrawPortals();
-            if ((mask & GeometryType.Bounds) != 0) DrawBounds();
+            if ((DrawMask & GeometryType.Edge) != 0) DrawEdges();
+            if ((DrawMask & GeometryType.Portal) != 0) DrawPortals();
+            if ((DrawMask & GeometryType.Bounds) != 0) DrawBounds();
         }
+
 
         private void DrawEdges()
         {
@@ -103,10 +119,45 @@ namespace Backstreets.Editor.PocketEditor.View
         private Color GetColor(GeometryID id) =>
             Palette.Get(
                 baseColor: Palette.GetBaseColor(id.Type),
-                isHot: id == NearestGeometry && GUIUtility.hotControl == controlID);
+                isHot: id == hotGeometry && GUIUtility.hotControl == controlID);
 
         private float GetThickness(GeometryID id) =>
-            id == NearestGeometry ? 2 : 1;
+            id == nearestGeometry && HandleUtility.nearestControl == controlID ? 2 : 1;
+
+        private (GeometryID ID, float Distance) FindNearest(GeometryType mask)
+        {
+            (GeometryID ID, float Distance) best = (GeometryID.None, float.PositiveInfinity);
+
+            void Contest(GeometryID selection, float distance)
+            {
+                if (distance <= best.Distance) best = (selection, distance);
+            }
+
+            if ((mask & GeometryType.Edge) != 0)
+            {
+                foreach (EdgeData edge in pocket.Edges)
+                {
+                    Contest(GeometryID.Of(edge), DistanceToEdge(edge));
+                }
+            }
+
+            if ((mask & GeometryType.Portal) != 0)
+            {
+                foreach (PortalData portal in pocket.Portals)
+                {
+                    if (pocket.FindEdge(portal.edgeID) is not { } portalLine) continue;
+
+                    Contest(GeometryID.Of(portal), PortalHandle.DistanceToPortal(portalLine));
+                }
+            }
+
+            if ((mask & GeometryType.Bounds) != 0)
+            {
+                Contest(GeometryID.OfBounds(), DistanceToRectangle(pocket.PocketRect));
+            }
+
+            return best;
+        }
 
         private static readonly int ControlHint = "GeometryView".GetHashCode();
 
@@ -119,5 +170,8 @@ namespace Backstreets.Editor.PocketEditor.View
             using var matrixScope = new Handles.DrawingScope(matrix);
             return HandleUtility.DistanceToRectangle(Vector2.one / 2, Quaternion.identity, 1);
         }
+
+
+        public delegate void InteractionDelegate(Event @event, GeometryID hotGeometry);
     }
 }
