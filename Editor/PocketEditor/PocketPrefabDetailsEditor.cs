@@ -1,4 +1,4 @@
-using System;
+using Backstreets.Editor.PocketEditor.Tool;
 using Backstreets.Pocket;
 using Backstreets.Editor.PocketEditor.View;
 using UnityEditor;
@@ -10,14 +10,28 @@ namespace Backstreets.Editor.PocketEditor
     public class PocketPrefabDetailsEditor : UnityEditor.Editor, IViewController
     {
         private PocketGeometryView view;
+        private IGeometryTool activeTool;
+
         private PocketPrefabDetails Pocket => (PocketPrefabDetails)target;
-        GeometryType IViewController.DrawMask => GeometryType.Everything;
-        GeometryType IViewController.PickMask => GeometryType.Everything;
+        GeometryType IViewController.DrawMask => activeTool?.DrawMask ?? GeometryType.Everything;
+        GeometryType IViewController.PickMask => activeTool?.PickMask ?? GeometryType.Everything;
 
 
         private void OnEnable()
         {
             view = new PocketGeometryView(Pocket, controller: this);
+            activeTool = new SelectionTool(Pocket);
+        }
+
+        public override void OnInspectorGUI()
+        {
+            if (activeTool != null)
+            {
+                using var box = new GUILayout.VerticalScope(GUI.skin.box, GUILayout.ExpandWidth(true));
+                activeTool.OnInspectorGUI();
+            }
+
+            base.OnInspectorGUI();
         }
 
         private void OnSceneGUI()
@@ -25,15 +39,8 @@ namespace Backstreets.Editor.PocketEditor
             view.Process(Event.current);
         }
 
-        void IViewController.OnViewEvent(Event @event, GeometryID hotGeometry)
-        {
-            bool isLeftMouseClick = @event is { type: EventType.MouseUp, button: 0 };
-            if (hotGeometry is { Type: GeometryType.Portal, ID: var portalID } && isLeftMouseClick)
-            {
-                int portalIndex = Array.FindIndex(Pocket.Portals, portal => portal.edgeID == portalID);
-                PortalSelection.Focus(Pocket, portalIndex);
-            }
-        }
+        void IViewController.OnViewEvent(Event @event, GeometryID hotGeometry) =>
+            activeTool?.OnViewEvent(@event, hotGeometry);
 
         [DrawGizmo(GizmoType.NonSelected, typeof(PocketPrefabDetails))]
         public static void DrawGizmo(PocketPrefabDetails pocket, GizmoType gizmoType)
