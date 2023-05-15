@@ -10,6 +10,7 @@ namespace Backstreets.Editor.PocketEditor.Model
 
         public readonly EdgesAccess Edges;
         public readonly PortalsAccess Portals;
+        public readonly CornersAccess Corners;
 
         public GeometryModel(PocketPrefabDetails pocket, Action updateViewAction)
         {
@@ -17,6 +18,7 @@ namespace Backstreets.Editor.PocketEditor.Model
             this.updateViewAction = updateViewAction;
             Edges = new EdgesAccess(pocket, model: this);
             Portals = new PortalsAccess(pocket, model: this);
+            Corners = new CornersAccess(pocket, model: this);
         }
 
         public void UpdateView() => updateViewAction();

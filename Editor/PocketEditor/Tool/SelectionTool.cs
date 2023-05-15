@@ -20,7 +20,7 @@ namespace Backstreets.Editor.PocketEditor.Tool
 
         public GeometryType DrawMask => GeometryType.Everything;
 
-        public GeometryType PickMask => GeometryType.Edge | GeometryType.Portal;
+        public GeometryType PickMask => GeometryType.Edge | GeometryType.Portal | GeometryType.Corner;
 
         public void OnViewEvent(Event @event, GeometryID hotGeometry)
         {
@@ -44,6 +44,9 @@ namespace Backstreets.Editor.PocketEditor.Tool
                     case GeometryType.Edge:
                         DrawEdgeInspector();
                         break;
+                    case GeometryType.Corner:
+                        DrawCornerInspector();
+                        break;
                     case GeometryType.Portal:
                         DrawPortalInspector();
                         break;
@@ -55,6 +58,19 @@ namespace Backstreets.Editor.PocketEditor.Tool
             catch (Exception e)
             {
                 GUILayout.Label(e.Message);
+            }
+        }
+
+        private void DrawCornerInspector()
+        {
+            CornerData cornerData = model.Corners.Get(inspectedGeometry);
+
+            using EditorGUI.ChangeCheckScope check = new();
+            cornerData.Position = EditorGUILayout.Vector2Field("Position", cornerData.Position);
+
+            if (check.changed)
+            {
+                model.Corners.Update(cornerData);
             }
         }
 
