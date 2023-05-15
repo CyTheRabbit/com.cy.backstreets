@@ -1,5 +1,4 @@
-﻿using System;
-using System.Linq;
+﻿using System.Linq;
 using Backstreets.Editor.PocketEditor.View;
 using Backstreets.Pocket;
 
@@ -32,16 +31,8 @@ namespace Backstreets.Editor.PocketEditor.Model
 
         public virtual TData Get(GeometryID id)
         {
-            AssertGeometryTypeMatches(id);
-            TData[] collection = GetDataCollection();
-            int index = FindIndex(id, collection);
-            return index == NotFound ? throw IDNotFound(id) : collection[index];
-        }
-
-        private int FindIndex(GeometryID id, TData[] collection)
-        {
-            int index = Array.FindIndex(collection, data => GetID(data) == id);
-            return index;
+            Validation.AssertGeometryType(id, SupportedType);
+            return Validation.FindItem(GetDataCollection(), id, GetID);
         }
 
         public virtual GeometryID Create(TData data)
@@ -60,14 +51,12 @@ namespace Backstreets.Editor.PocketEditor.Model
 
         public virtual GeometryID Update(GeometryID id, TData data)
         {
-            AssertGeometryTypeMatches(id);
-
-            GeometryID newID = GetID(data);
-            if (id != newID) AssertIDNotUsed(newID);
-
+            Validation.AssertGeometryType(id, SupportedType);
             TData[] collection = GetDataCollection();
-            int index = FindIndex(id, collection);
-            if (index == NotFound) throw IDNotFound(id);
+            GeometryID newID = GetID(data);
+            if (id != newID) Validation.AssertIDNotUsed(collection, newID, GetID);
+
+            int index = Validation.FindIndex(collection, id, GetID);
 
             using (Model.RecordChanges($"Update {newID}"))
             {
@@ -80,7 +69,7 @@ namespace Backstreets.Editor.PocketEditor.Model
 
         public virtual void Delete(GeometryID id)
         {
-            AssertGeometryTypeMatches(id);
+            Validation.AssertGeometryType(id, SupportedType);
             TData[] collection = GetDataCollection();
             using (Model.RecordChanges($"Delete {id}"))
             {
@@ -88,29 +77,5 @@ namespace Backstreets.Editor.PocketEditor.Model
                 SetDataCollection(collection);
             }
         }
-
-
-        private void AssertGeometryTypeMatches(GeometryID id)
-        {
-            if (id.Type != SupportedType)
-            {
-                throw new ArgumentOutOfRangeException($"Expected ID of type {SupportedType}, but got {id.Type}");
-            }
-        }
-
-        private void AssertIDNotUsed(GeometryID id)
-        {
-            bool idUsed = GetDataCollection().Any(data => GetID(data) == id);
-            if (idUsed) throw IDAlreadyUsed(id);
-        }
-
-
-        private const int NotFound = -1;
-
-        private static Exception IDNotFound(GeometryID id) =>
-            new ArgumentOutOfRangeException($"There is no geometry with id \"{id}\"");
-
-        private static Exception IDAlreadyUsed(GeometryID id) =>
-            new ArgumentOutOfRangeException($"ID \"{id}\" is already used");
     }
 }
