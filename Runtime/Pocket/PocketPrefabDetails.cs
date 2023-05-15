@@ -24,7 +24,11 @@ namespace Backstreets.Pocket
 
         public Color DebugColor => debugColor;
 
-        public PortalData[] Portals => portals;
+        public PortalData[] Portals
+        {
+            get => portals;
+            set => portals = value;
+        }
 
         public Bounds PocketBounds => pocketBounds;
 

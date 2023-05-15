@@ -1,20 +1,20 @@
 ﻿using System;
 using Backstreets.Data;
+using Backstreets.Editor.PocketEditor.Model;
 using Backstreets.Editor.PocketEditor.View;
-using Backstreets.Pocket;
 using UnityEditor;
 using UnityEngine;
 
 namespace Backstreets.Editor.PocketEditor.Tool
 {
-    public class SelectionTool : IGeometryTool
+    internal class SelectionTool : IGeometryTool
     {
-        private readonly PocketPrefabDetails pocket;
+        private readonly GeometryModel model;
         private GeometryID inspectedGeometry;
 
-        public SelectionTool(PocketPrefabDetails pocket)
+        public SelectionTool(GeometryModel model)
         {
-            this.pocket = pocket;
+            this.model = model;
             inspectedGeometry = GeometryID.None;
         }
 
@@ -28,26 +28,33 @@ namespace Backstreets.Editor.PocketEditor.Tool
             if (isLeftMouseClick)
             {
                 inspectedGeometry = hotGeometry;
-                EditorUtility.SetDirty(pocket); // hack to immediately repaint inspector
+                model.UpdateView();
             }
         }
 
         public void OnInspectorGUI()
         {
-            switch (inspectedGeometry.Type)
+            try
             {
-                case GeometryType.None:
-                    GUILayout.Label("Click geometry to start inspection");
-                    break;
-                case GeometryType.Edge:
-                    DrawEdgeInspector();
-                    break;
-                case GeometryType.Portal:
-                    DrawPortalInspector();
-                    break;
-                default:
-                    GUILayout.Label($"Cannot inspect {inspectedGeometry.Type}");
-                    break;
+                switch (inspectedGeometry.Type)
+                {
+                    case GeometryType.None:
+                        GUILayout.Label("Click geometry to start inspection");
+                        break;
+                    case GeometryType.Edge:
+                        DrawEdgeInspector();
+                        break;
+                    case GeometryType.Portal:
+                        DrawPortalInspector();
+                        break;
+                    default:
+                        GUILayout.Label($"Cannot inspect {inspectedGeometry.Type}");
+                        break;
+                }
+            }
+            catch (Exception e)
+            {
+                GUILayout.Label(e.Message);
             }
         }
 
@@ -57,54 +64,35 @@ namespace Backstreets.Editor.PocketEditor.Tool
 
         private void DrawPortalInspector()
         {
-            int portalIndex = Array.FindIndex(pocket.Portals, portal => portal.edgeID == inspectedGeometry.ID);
-            if (portalIndex < 0)
-            {
-                GUILayout.Label("Unknown Portal");
-                return;
-            }
-
+            PortalData portalData = model.Portals.Get(inspectedGeometry);
             using EditorGUI.ChangeCheckScope check = new();
-
-            PortalData portalData = pocket.Portals[portalIndex];
             GUILayout.Label($"Portal {portalData.edgeID}");
             portalData.edgeID = EditorGUILayout.IntField("Edge ID", portalData.edgeID);
             portalData.exitID = EditorGUILayout.IntField("Exit ID", portalData.exitID);
 
             if (check.changed)
             {
-                pocket.Portals[portalIndex] = portalData;
-                inspectedGeometry = GeometryID.Of(portalData);
-                EditorUtility.SetDirty(pocket);
+                inspectedGeometry = model.Portals.Update(inspectedGeometry, portalData);
             }
         }
 
         private void DrawEdgeInspector()
         {
-            int edgeIndex = Array.FindIndex(pocket.Edges, edge => edge.id == inspectedGeometry.ID);
-            if (edgeIndex < 0)
-            {
-                GUILayout.Label("Unknown Edge");
-                return;
-            }
+            EdgeData edgeData = model.Edges.Get(inspectedGeometry);
 
             using EditorGUI.ChangeCheckScope check = new();
-
-            EdgeData edgeData = pocket.Edges[edgeIndex];
             edgeData.id = EditorGUILayout.IntField("Edge ID", edgeData.id);
             edgeData.right = EditorGUILayout.Vector2Field("Right", edgeData.right);
             edgeData.left = EditorGUILayout.Vector2Field("Left", edgeData.left);
 
-            if (GUILayout.Button("Flip left and right"))
+            if (GUILayout.Button("Swap corners"))
             {
                 (edgeData.right, edgeData.left) = (edgeData.left, edgeData.right);
             }
 
             if (check.changed)
             {
-                pocket.Edges[edgeIndex] = edgeData;
-                inspectedGeometry = GeometryID.Of(edgeData);
-                EditorUtility.SetDirty(pocket);
+                inspectedGeometry = model.Edges.Update(inspectedGeometry, edgeData);
             }
         }
     }

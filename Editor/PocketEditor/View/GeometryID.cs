@@ -9,7 +9,7 @@ namespace Backstreets.Editor.PocketEditor.View
         public readonly GeometryType Type;
         public readonly int ID;
 
-        private GeometryID(GeometryType type, int id)
+        public GeometryID(GeometryType type, int id)
         {
             Type = type;
             ID = id;

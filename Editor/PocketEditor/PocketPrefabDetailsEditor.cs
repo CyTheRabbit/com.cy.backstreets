@@ -1,3 +1,4 @@
+using Backstreets.Editor.PocketEditor.Model;
 using Backstreets.Editor.PocketEditor.Tool;
 using Backstreets.Pocket;
 using Backstreets.Editor.PocketEditor.View;
@@ -10,6 +11,7 @@ namespace Backstreets.Editor.PocketEditor
     public class PocketPrefabDetailsEditor : UnityEditor.Editor, IViewController
     {
         private PocketGeometryView view;
+        private GeometryModel model;
         private IGeometryTool activeTool;
 
         private PocketPrefabDetails Pocket => (PocketPrefabDetails)target;
@@ -20,7 +22,8 @@ namespace Backstreets.Editor.PocketEditor
         private void OnEnable()
         {
             view = new PocketGeometryView(Pocket, controller: this);
-            activeTool = new SelectionTool(Pocket);
+            model = new GeometryModel(Pocket, updateViewAction: Repaint);
+            activeTool = new SelectionTool(model);
         }
 
         public override void OnInspectorGUI()
