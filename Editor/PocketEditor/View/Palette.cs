@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using UnityEditor;
+using UnityEngine;
 
 namespace Backstreets.Editor.PocketEditor.View
 {
@@ -7,10 +8,9 @@ namespace Backstreets.Editor.PocketEditor.View
         public Color EdgeColor;
         public Color PortalColor;
         public Color BoundsColor;
-        public Color HotColor;
 
         public Color Get(Color baseColor, bool isHot) =>
-            isHot ? HotColor :
+            isHot ? Handles.selectedColor :
             baseColor;
 
         public Color GetBaseColor(GeometryType type) => type switch
@@ -26,7 +26,6 @@ namespace Backstreets.Editor.PocketEditor.View
             EdgeColor = Color.white,
             PortalColor = Color.blue,
             BoundsColor = Color.red,
-            HotColor = Color.yellow,
         };
     }
 }

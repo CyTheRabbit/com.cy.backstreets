@@ -48,7 +48,7 @@ namespace Backstreets.Editor.PocketEditor
         [DrawGizmo(GizmoType.NonSelected, typeof(PocketPrefabDetails))]
         public static void DrawGizmo(PocketPrefabDetails pocket, GizmoType gizmoType)
         {
-            new PocketGeometryView(pocket) { Palette = DesaturatedPalette }.Draw();
+            new GeometryDrawer(pocket) { Palette = DesaturatedPalette }.Draw(GeometryType.Everything);
         }
 
         [DrawGizmo(GizmoType.Active | GizmoType.Selected, typeof(PocketPrefabDetails))]
@@ -63,8 +63,8 @@ namespace Backstreets.Editor.PocketEditor
         private static readonly Palette DesaturatedPalette = new()
         {
             EdgeColor = LightGrey,
+            CornerColor = LightGrey,
             BoundsColor = Color.red,
-            HotColor = Color.white,
             PortalColor = Color.grey,
         };
     }
