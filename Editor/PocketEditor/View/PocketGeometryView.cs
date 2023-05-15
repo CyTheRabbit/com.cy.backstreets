@@ -1,5 +1,7 @@
-﻿using Backstreets.Data;
+﻿using System.Collections.Generic;
+using Backstreets.Data;
 using Backstreets.Editor.PocketEditor.CustomHandles;
+using Backstreets.Editor.PocketEditor.Model;
 using Backstreets.Pocket;
 using Unity.Mathematics;
 using UnityEditor;
@@ -85,6 +87,17 @@ namespace Backstreets.Editor.PocketEditor.View
         {
             controlToGeometry.Clear();
 
+            if ((mask & GeometryType.Corner) != 0)
+            {
+                foreach (EdgeData edge in pocket.Edges)
+                {
+                    CornerData right = new(edge, CornerData.Endpoint.Right);
+                    CornerData left = new(edge, CornerData.Endpoint.Left);
+                    AddControl(GeometryID.Of(right), DistanceToCorner(right));
+                    AddControl(GeometryID.Of(left), DistanceToCorner(left));
+                }
+            }
+
             if ((mask & GeometryType.Edge) != 0)
             {
                 foreach (EdgeData edge in pocket.Edges)
@@ -120,6 +133,9 @@ namespace Backstreets.Editor.PocketEditor.View
             controlToGeometry.TryGetValue(controlID, out GeometryID geometry) ? geometry : GeometryID.None;
 
 
+        private const float CornerRadius = 0.025f;
+
+
         private static float DistanceToEdge(EdgeData edge) =>
             HandleUtility.DistanceToLine(math.float3(edge.left, 0), math.float3(edge.right, 0));
 
@@ -129,5 +145,8 @@ namespace Backstreets.Editor.PocketEditor.View
             using var matrixScope = new Handles.DrawingScope(matrix);
             return HandleUtility.DistanceToRectangle(Vector2.one / 2, Quaternion.identity, 1);
         }
+
+        private static float DistanceToCorner(CornerData corner) =>
+            HandleUtility.DistanceToCircle(math.float3(corner.Position, 0), CornerRadius);
     }
 }

@@ -7,6 +7,7 @@ namespace Backstreets.Editor.PocketEditor.View
     {
         public Color EdgeColor;
         public Color PortalColor;
+        public Color CornerColor;
         public Color BoundsColor;
 
         public Color Get(Color baseColor, bool isHot) =>
@@ -18,6 +19,7 @@ namespace Backstreets.Editor.PocketEditor.View
             GeometryType.Edge => EdgeColor,
             GeometryType.Portal => PortalColor,
             GeometryType.Bounds => BoundsColor,
+            GeometryType.Corner => CornerColor,
             _ => Color.magenta,
         };
 
@@ -25,6 +27,7 @@ namespace Backstreets.Editor.PocketEditor.View
         {
             EdgeColor = Color.white,
             PortalColor = Color.blue,
+            CornerColor = Color.white,
             BoundsColor = Color.red,
         };
     }

@@ -32,9 +32,29 @@ namespace Backstreets.Editor.PocketEditor.View
             if ((mask & GeometryType.Edge) != 0) DrawEdges();
             if ((mask & GeometryType.Portal) != 0) DrawPortals();
             if ((mask & GeometryType.Bounds) != 0) DrawBounds();
+            if ((mask & GeometryType.Corner) != 0) DrawCorners();
         }
 
 
+        private void DrawCorners()
+        {
+            foreach (EdgeData edge in pocket.Edges)
+            {
+                DrawCorner(new CornerData(edge, CornerData.Endpoint.Right));
+                DrawCorner(new CornerData(edge, CornerData.Endpoint.Left));
+            }
+        }
+
+        private void DrawCorner(CornerData corner)
+        {
+            GeometryID id = GeometryID.Of(corner);
+            if (NearestGeometry != id) return;
+
+            Color color = GetColor(id);
+            float thickness = GetThickness(id);
+            using var drawingScope = new Handles.DrawingScope(color);
+            Handles.DrawWireDisc(math.float3(corner.Position, 0), Vector3.back, CornerRadius, thickness);
+        }
 
         private void DrawEdges()
         {
@@ -75,5 +95,8 @@ namespace Backstreets.Editor.PocketEditor.View
 
         private float GetThickness(GeometryID id) =>
             NearestGeometry == id ? 2 : 1;
+
+
+        private const float CornerRadius = 0.025f;
     }
 }
