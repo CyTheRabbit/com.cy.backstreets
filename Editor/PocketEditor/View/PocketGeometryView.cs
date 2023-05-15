@@ -11,50 +11,46 @@ namespace Backstreets.Editor.PocketEditor.View
     {
         private readonly PocketPrefabDetails pocket;
         private readonly IViewController controller;
-        private int controlID;
-        private GeometryID hotGeometry;
-        private GeometryID nearestGeometry;
+        private readonly Dictionary<int, GeometryID> controlToGeometry;
 
         public PocketGeometryView(PocketPrefabDetails pocket, IViewController controller = null)
         {
-            controlID = -1;
+            controlToGeometry = new Dictionary<int, GeometryID>();
             this.pocket = pocket;
             this.controller = controller ?? DefaultViewController.Instance;
             Palette = Palette.Default;
-            hotGeometry = GeometryID.None;
-            nearestGeometry = GeometryID.None;
         }
 
         public Palette Palette { get; set; }
 
+        public GeometryID NearestGeometry =>
+            GetGeometryByControlID(HandleUtility.nearestControl);
+
+        public GeometryID HotGeometry =>
+            GetGeometryByControlID(GUIUtility.hotControl);
+
         public void Process(Event @event)
         {
-            controlID = GUIUtility.GetControlID(ControlHint, FocusType.Passive);
-            bool isHot = GUIUtility.hotControl == controlID;
-            bool isNearest = HandleUtility.nearestControl == controlID;
+            bool isHot = controlToGeometry.ContainsKey(GUIUtility.hotControl);
+            bool isNearest = controlToGeometry.ContainsKey(HandleUtility.nearestControl);
             switch (@event)
             {
                 case { type: EventType.MouseMove or EventType.Layout }:
                 {
-                    (GeometryID ID, float Distance) best = FindNearest(controller.PickMask);
-                    HandleUtility.AddControl(controlID, best.Distance);
-                    nearestGeometry = best.ID;
-                    if (hotGeometry != nearestGeometry) hotGeometry = GeometryID.None;
+                    AddControls(controller.PickMask);
                     break;
                 }
                 case { type: EventType.MouseDown, button: 0 or 2 } when isNearest:
                 {
-                    GUIUtility.hotControl = controlID;
-                    hotGeometry = nearestGeometry;
-                    controller.OnViewEvent(@event, hotGeometry);
+                    GUIUtility.hotControl = HandleUtility.nearestControl;
+                    controller.OnViewEvent(@event, HotGeometry);
                     Event.current.Use();
                     break;
                 }
                 case { type: EventType.MouseUp, button: 0 or 2 } when isHot:
                 {
-                    controller.OnViewEvent(@event, hotGeometry);
+                    controller.OnViewEvent(@event, HotGeometry);
                     GUIUtility.hotControl = 0;
-                    hotGeometry = GeometryID.None;
                     Event.current.Use();
                     break;
                 }
@@ -62,12 +58,12 @@ namespace Backstreets.Editor.PocketEditor.View
                 case { type: EventType.Repaint }:
                 {
                     Draw();
-                    controller.OnViewEvent(@event, hotGeometry);
+                    controller.OnViewEvent(@event, HotGeometry);
                     break;
                 }
                 case { type: not (EventType.Ignore or EventType.Used) } when isHot:
                 {
-                    controller.OnViewEvent(@event, hotGeometry);
+                    controller.OnViewEvent(@event, HotGeometry);
                     Event.current.Use();
                     break;
                 }
@@ -118,25 +114,20 @@ namespace Backstreets.Editor.PocketEditor.View
         private Color GetColor(GeometryID id) =>
             Palette.Get(
                 baseColor: Palette.GetBaseColor(id.Type),
-                isHot: id == hotGeometry && GUIUtility.hotControl == controlID);
+                isHot: HotGeometry == id);
 
         private float GetThickness(GeometryID id) =>
-            id == nearestGeometry && HandleUtility.nearestControl == controlID ? 2 : 1;
+            NearestGeometry == id ? 2 : 1;
 
-        private (GeometryID ID, float Distance) FindNearest(GeometryType mask)
+        private void AddControls(GeometryType mask)
         {
-            (GeometryID ID, float Distance) best = (GeometryID.None, float.PositiveInfinity);
-
-            void Contest(GeometryID selection, float distance)
-            {
-                if (distance <= best.Distance) best = (selection, distance);
-            }
+            controlToGeometry.Clear();
 
             if ((mask & GeometryType.Edge) != 0)
             {
                 foreach (EdgeData edge in pocket.Edges)
                 {
-                    Contest(GeometryID.Of(edge), DistanceToEdge(edge));
+                    AddControl(GeometryID.Of(edge), DistanceToEdge(edge));
                 }
             }
 
@@ -146,19 +137,26 @@ namespace Backstreets.Editor.PocketEditor.View
                 {
                     if (pocket.FindEdge(portal.edgeID) is not { } portalLine) continue;
 
-                    Contest(GeometryID.Of(portal), PortalHandle.DistanceToPortal(portalLine));
+                    AddControl(GeometryID.Of(portal), PortalHandle.DistanceToPortal(portalLine));
                 }
             }
 
             if ((mask & GeometryType.Bounds) != 0)
             {
-                Contest(GeometryID.OfBounds(), DistanceToRectangle(pocket.PocketRect));
+                AddControl(GeometryID.OfBounds(), DistanceToRectangle(pocket.PocketRect));
             }
-
-            return best;
         }
 
-        private static readonly int ControlHint = "GeometryView".GetHashCode();
+        private void AddControl(GeometryID geometryID, float distance)
+        {
+            int controlID = GUIUtility.GetControlID(hint: geometryID.GetHashCode(), FocusType.Passive);
+            controlToGeometry.Add(controlID, geometryID);
+            HandleUtility.AddControl(controlID, distance);
+        }
+
+        private GeometryID GetGeometryByControlID(int controlID) =>
+            controlToGeometry.TryGetValue(controlID, out GeometryID geometry) ? geometry : GeometryID.None;
+
 
         private static float DistanceToEdge(EdgeData edge) =>
             HandleUtility.DistanceToLine(math.float3(edge.left, 0), math.float3(edge.right, 0));
