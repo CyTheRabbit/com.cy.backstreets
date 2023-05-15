@@ -19,10 +19,7 @@ namespace Backstreets.Editor.PocketEditor.Model
 
         protected override GeometryID GetID(PortalData data) => GeometryID.Of(data);
 
-        protected override void AssignID(GeometryID id, ref PortalData data)
-        {
-            data.edgeID = id.ID;
-        }
+        protected override void AssignID(GeometryID id, ref PortalData data) => data.edgeID = id.ID;
 
         protected override GeometryID GetNewID() => throw new NotSupportedException();
     }

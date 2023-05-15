@@ -1,8 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using Backstreets.Data;
-using Backstreets.Editor.PocketEditor.View;
 using Backstreets.Pocket;
 
 namespace Backstreets.Editor.PocketEditor.Model

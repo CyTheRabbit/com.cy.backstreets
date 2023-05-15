@@ -18,10 +18,15 @@ namespace Backstreets.Editor.PocketEditor.Model
 
 
         protected abstract GeometryType SupportedType { get; }
+
         protected abstract TData[] GetDataCollection();
+
         protected abstract void SetDataCollection(TData[] collection);
+
         protected abstract GeometryID GetID(TData data);
+
         protected abstract void AssignID(GeometryID id, ref TData data);
+
         protected abstract GeometryID GetNewID();
 
 
