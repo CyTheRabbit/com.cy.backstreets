@@ -45,14 +45,14 @@ namespace Backstreets.Editor.PocketEditor.View
                 {
                     GUIUtility.hotControl = HandleUtility.nearestControl;
                     controller.OnViewEvent(@event, HotGeometry);
-                    Event.current.Use();
+                    @event.Use();
                     break;
                 }
                 case { type: EventType.MouseUp, button: 0 or 2 } when isHot:
                 {
                     controller.OnViewEvent(@event, HotGeometry);
                     GUIUtility.hotControl = 0;
-                    Event.current.Use();
+                    @event.Use();
                     break;
                 }
 
@@ -65,7 +65,7 @@ namespace Backstreets.Editor.PocketEditor.View
                 case { type: not (EventType.Ignore or EventType.Used) } when isHot:
                 {
                     controller.OnViewEvent(@event, HotGeometry);
-                    Event.current.Use();
+                    @event.Use();
                     break;
                 }
             }

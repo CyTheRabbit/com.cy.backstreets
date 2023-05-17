@@ -1,4 +1,5 @@
 ﻿using System;
+using Backstreets.Pocket;
 using UnityEditor;
 using Object = UnityEngine.Object;
 
@@ -7,9 +8,9 @@ namespace Backstreets.Editor.PocketEditor.Model
     internal readonly struct RecordChangesScope : IDisposable
     {
         private readonly GeometryModel model;
-        private readonly Object target;
+        private readonly PocketPrefabDetails target;
 
-        public RecordChangesScope(GeometryModel model, Object target, string name)
+        public RecordChangesScope(GeometryModel model, PocketPrefabDetails target, string name)
         {
             this.model = model;
             this.target = target;
@@ -19,6 +20,7 @@ namespace Backstreets.Editor.PocketEditor.Model
         public void Dispose()
         {
             EditorUtility.SetDirty(target);
+            target.OnValidate();
             model.UpdateView();
         }
     }

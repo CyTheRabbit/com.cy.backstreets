@@ -36,7 +36,7 @@ namespace Backstreets.Editor.PocketEditor.Model
         public static void AssertIDNotUsed<T>(T[] array, GeometryID id, Func<T, GeometryID> getID)
         {
             int index = Array.FindIndex(array, item => getID(item) == id);
-            if (index != -1) throw IDNotFound(id);
+            if (index != -1) throw IDAlreadyUsed(id);
         }
     }
 }
