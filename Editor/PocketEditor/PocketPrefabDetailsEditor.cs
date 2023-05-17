@@ -11,31 +11,52 @@ namespace Backstreets.Editor.PocketEditor
     [CustomEditor(typeof(PocketPrefabDetails))]
     public class PocketPrefabDetailsEditor : UnityEditor.Editor, IViewController
     {
+        private GeometryToolbar toolbar;
         private PocketGeometryView view;
         private GeometryModel model;
         private IGeometryTool activeTool;
 
         private PocketPrefabDetails Pocket => (PocketPrefabDetails)target;
         GeometryType IViewController.DrawMask => activeTool?.DrawMask ?? GeometryType.Everything;
-        GeometryType IViewController.PickMask => activeTool?.PickMask ?? GeometryType.Everything;
+        GeometryType IViewController.PickMask => activeTool?.PickMask ?? GeometryType.None;
 
 
         private void OnEnable()
         {
             view = new PocketGeometryView(Pocket, controller: this);
             model = new GeometryModel(Pocket, updateViewAction: Repaint);
-            activeTool = new MoveTool(model);
+            activeTool = null;
+            toolbar = new GeometryToolbar(new GeometryToolbar.Button[]
+            {
+                new() {Content = new GUIContent("Select"), Factory = () => new SelectionTool(model)},
+                new() {Content = new GUIContent("Move"), Factory = () => new MoveTool(model)},
+                new() {Content = new GUIContent("Raw"), Factory = () => null}
+            }, SetTool, 2);
+        }
+
+        private void SetTool(IGeometryTool tool)
+        {
+            activeTool?.Dispose();
+            activeTool = tool;
+
+            foreach (SceneView sceneView in SceneView.sceneViews)
+            {
+                sceneView.Repaint();
+            }
         }
 
         public override void OnInspectorGUI()
         {
+            toolbar.Process(Event.current);
             if (activeTool != null)
             {
                 using var box = new GUILayout.VerticalScope(GUI.skin.box, GUILayout.ExpandWidth(true));
                 activeTool.OnInspectorGUI();
             }
-
-            base.OnInspectorGUI();
+            else
+            {
+                base.OnInspectorGUI();
+            }
         }
 
         private void OnSceneGUI()

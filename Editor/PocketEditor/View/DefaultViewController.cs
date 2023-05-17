@@ -6,7 +6,7 @@ namespace Backstreets.Editor.PocketEditor.View
     {
         public GeometryType DrawMask => GeometryType.Everything;
 
-        public GeometryType PickMask => GeometryType.Everything;
+        public GeometryType PickMask => GeometryType.None;
 
         public void OnViewEvent(Event @event, GeometryID hotGeometry) { }
 
