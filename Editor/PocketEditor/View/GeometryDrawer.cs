@@ -50,8 +50,11 @@ namespace Backstreets.Editor.PocketEditor.View
             GeometryID id = GeometryID.Of(corner);
             if (NearestGeometry != id) return;
 
-            Color color = GetColor(id);
-            float thickness = GetThickness(id);
+            DrawCorner(corner, GetColor(id), GetThickness(id));
+        }
+
+        internal static void DrawCorner(CornerData corner, Color color, float thickness)
+        {
             using var drawingScope = new Handles.DrawingScope(color);
             Handles.DrawWireDisc(math.float3(corner.Position, 0), Vector3.back, CornerRadius, thickness);
         }

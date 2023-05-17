@@ -1,5 +1,6 @@
 using Backstreets.Editor.PocketEditor.Model;
 using Backstreets.Editor.PocketEditor.Tool;
+using Backstreets.Editor.PocketEditor.Tool.Move;
 using Backstreets.Pocket;
 using Backstreets.Editor.PocketEditor.View;
 using UnityEditor;
@@ -23,7 +24,7 @@ namespace Backstreets.Editor.PocketEditor
         {
             view = new PocketGeometryView(Pocket, controller: this);
             model = new GeometryModel(Pocket, updateViewAction: Repaint);
-            activeTool = new SelectionTool(model);
+            activeTool = new MoveTool(model);
         }
 
         public override void OnInspectorGUI()
@@ -39,6 +40,7 @@ namespace Backstreets.Editor.PocketEditor
 
         private void OnSceneGUI()
         {
+            activeTool?.OnBeforeView(Event.current);
             view.Process(Event.current);
         }
 

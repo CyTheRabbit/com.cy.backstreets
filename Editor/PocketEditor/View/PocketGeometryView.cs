@@ -9,7 +9,7 @@ using UnityEngine;
 
 namespace Backstreets.Editor.PocketEditor.View
 {
-    public struct PocketGeometryView
+    public class PocketGeometryView
     {
         private readonly PocketPrefabDetails pocket;
         private readonly IViewController controller;

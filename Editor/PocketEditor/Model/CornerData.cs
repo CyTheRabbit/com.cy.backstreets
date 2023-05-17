@@ -1,7 +1,7 @@
 ﻿using System;
 using Backstreets.Data;
-using Backstreets.FOV.Geometry;
 using Unity.Mathematics;
+using UnityEngine;
 
 namespace Backstreets.Editor.PocketEditor.Model
 {
@@ -29,6 +29,13 @@ namespace Backstreets.Editor.PocketEditor.Model
         public int EdgeID;
         public Endpoint End;
         public float2 Position;
+
+        public CornerData Offset(Vector2 offset)
+        {
+            CornerData copy = this;
+            copy.Position += (float2)offset;
+            return copy;
+        }
 
         internal enum Endpoint
         {
