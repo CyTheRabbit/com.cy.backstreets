@@ -44,10 +44,30 @@ namespace Backstreets.Editor.PocketEditor.Tool.Move
         {
             if (@event is { type: EventType.Repaint })
             {
-                foreach (CornerData corner in selectedCorners)
+                DrawSelectedCorners();
+
+                if (!selectionBox.IsDragging)
                 {
-                    GeometryDrawer.DrawCorner(corner, Color.yellow, thickness: 2f);
+                    DrawPreciseMovePreview();
                 }
+            }
+        }
+
+        private void DrawSelectedCorners()
+        {
+            foreach (CornerData corner in selectedCorners)
+            {
+                GeometryDrawer.DrawCorner(corner, Color.yellow, thickness: 2f);
+            }
+        }
+
+        private void DrawPreciseMovePreview()
+        {
+            if (preciseMoveInput == default) return;
+
+            foreach (CornerData corner in selectedCorners)
+            {
+                GeometryDrawer.DrawCorner(corner.Offset(preciseMoveInput), Color.white, thickness: 0.5f);
             }
         }
 
@@ -59,9 +79,11 @@ namespace Backstreets.Editor.PocketEditor.Tool.Move
         {
             if (selectedCorners.Length == 0)
             {
-                GUILayout.Label("Select geometry to start moving.");
+                GUILayout.Label("Select geometry to see more options");
                 return;
             }
+
+            using EditorGUI.ChangeCheckScope check = new();
 
             GUILayout.Label("Precise Input");
             using (new EditorGUI.IndentLevelScope())
@@ -72,6 +94,12 @@ namespace Backstreets.Editor.PocketEditor.Tool.Move
                 {
                     MoveSelectedCorners(preciseMoveInput);
                 }
+
+            }
+
+            if (check.changed)
+            {
+                model.UpdateView();
             }
         }
 

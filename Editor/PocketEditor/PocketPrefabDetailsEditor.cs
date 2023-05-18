@@ -24,7 +24,7 @@ namespace Backstreets.Editor.PocketEditor
         private void OnEnable()
         {
             view = new PocketGeometryView(Pocket, controller: this);
-            model = new GeometryModel(Pocket, updateViewAction: Repaint);
+            model = new GeometryModel(Pocket, UpdateView);
             activeTool = null;
             toolbar = new GeometryToolbar(new GeometryToolbar.Button[]
             {
@@ -38,11 +38,7 @@ namespace Backstreets.Editor.PocketEditor
         {
             activeTool?.Dispose();
             activeTool = tool;
-
-            foreach (SceneView sceneView in SceneView.sceneViews)
-            {
-                sceneView.Repaint();
-            }
+            UpdateView();
         }
 
         public override void OnInspectorGUI()
@@ -63,6 +59,15 @@ namespace Backstreets.Editor.PocketEditor
         {
             activeTool?.OnBeforeView(Event.current);
             view.Process(Event.current);
+        }
+
+        private void UpdateView()
+        {
+            Repaint();
+            foreach (SceneView sceneView in SceneView.sceneViews)
+            {
+                sceneView.Repaint();
+            }
         }
 
         void IViewController.OnViewEvent(Event @event, GeometryID hotGeometry) =>
