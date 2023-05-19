@@ -30,8 +30,9 @@ namespace Backstreets.Editor.PocketEditor
             {
                 new() {Content = new GUIContent("Select"), Factory = () => new SelectionTool(model)},
                 new() {Content = new GUIContent("Move"), Factory = () => new MoveTool(model)},
+                new() {Content = new GUIContent("Split"), Factory = () => new DeformTool(model)},
                 new() {Content = new GUIContent("Raw"), Factory = () => null}
-            }, SetTool, 2);
+            }, SetTool, 3);
         }
 
         private void SetTool(IGeometryTool tool)

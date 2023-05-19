@@ -38,7 +38,7 @@ namespace Backstreets.Editor.PocketEditor.Model
             return Validation.FindItem(GetDataCollection(), id, GetIDCached);
         }
 
-        public virtual GeometryID Create(TData data)
+        public virtual void Create(ref TData data)
         {
             GeometryID id = GetNewID();
             AssignID(id, ref data);
@@ -48,8 +48,6 @@ namespace Backstreets.Editor.PocketEditor.Model
                 collection = collection.Append(data).ToArray();
                 SetDataCollection(collection);
             }
-
-            return id;
         }
 
         public virtual GeometryID Update(GeometryID id, TData data)
