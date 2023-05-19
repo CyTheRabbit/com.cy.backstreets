@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using Backstreets.Data;
 using Backstreets.Editor.PocketEditor.Model;
 using Backstreets.Editor.PocketEditor.View;
@@ -23,28 +24,24 @@ namespace Backstreets.Editor.PocketEditor.Tool
 
         public GeometryType DrawMask => GeometryType.Everything;
 
-        public GeometryType PickMask => GeometryType.Edge;
+        public GeometryType PickMask => GeometryType.Edge | GeometryType.Corner;
 
 
-        public void OnViewEvent(Event @event, GeometryID hotGeometry)
+        public void OnBeforeView(Event @event)
         {
             bool isDraggingCorners = dragCorners is { Length: > 0 };
             switch (@event)
             {
-                case { type: EventType.MouseDown, button: 0 }:
-                {
-                    PerformSplit(@event, hotGeometry);
-                    break;
-                }
                 case { type: EventType.MouseDrag, button: 0 }
                     when isDraggingCorners:
                 {
                     Vector2 newPosition = ProjectOntoGeometry(@event.mousePosition);
                     MoveCorners(newPosition);
+                    @event.Use();
                     break;
                 }
                 case { type: EventType.MouseUp, button: 0 }
-                    when hotGeometry is { Type: GeometryType.Edge }:
+                    when isDraggingCorners:
                 {
                     dragCorners = Array.Empty<CornerData>();
                     break;
@@ -58,12 +55,30 @@ namespace Backstreets.Editor.PocketEditor.Tool
             }
         }
 
+        public void OnViewEvent(Event @event, GeometryID hotGeometry)
+        {
+            if (@event is { type: EventType.MouseDown, button: 0 })
+            {
+                switch (hotGeometry)
+                {
+                    case { Type: GeometryType.Edge }:
+                        PerformSplit(@event, hotGeometry);
+                        break;
+                    case { Type: GeometryType.Corner }:
+                        CaptureCorners(hotGeometry);
+                        break;
+                }
+            }
+        }
+
         public void Dispose()
         {
         }
 
         public void OnInspectorGUI()
         {
+            GUILayout.Label("Click on edges to split");
+            GUILayout.Label("Drag corners to move");
         }
 
 
@@ -107,6 +122,14 @@ namespace Backstreets.Editor.PocketEditor.Tool
                 new(rightCut, CornerData.Endpoint.Left),
                 new(leftCut, CornerData.Endpoint.Right),
             };
+        }
+
+        private void CaptureCorners(GeometryID hotGeometry)
+        {
+            float2 position = model.Corners.Get(hotGeometry).Position;
+            dragCorners = model.Corners.All
+                .Where(corner => corner.Position.Equals(position))
+                .ToArray();
         }
 
 

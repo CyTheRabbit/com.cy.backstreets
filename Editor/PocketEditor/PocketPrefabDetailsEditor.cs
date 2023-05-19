@@ -28,9 +28,9 @@ namespace Backstreets.Editor.PocketEditor
             activeTool = null;
             toolbar = new GeometryToolbar(new GeometryToolbar.Button[]
             {
-                new() {Content = new GUIContent("Select"), Factory = () => new SelectionTool(model)},
+                new() {Content = new GUIContent("Inspect"), Factory = () => new SelectionTool(model)},
                 new() {Content = new GUIContent("Move"), Factory = () => new MoveTool(model)},
-                new() {Content = new GUIContent("Split"), Factory = () => new DeformTool(model)},
+                new() {Content = new GUIContent("Deform"), Factory = () => new DeformTool(model)},
                 new() {Content = new GUIContent("Raw"), Factory = () => null}
             }, SetTool, 3);
         }
