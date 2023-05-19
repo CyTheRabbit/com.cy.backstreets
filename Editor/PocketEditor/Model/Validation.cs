@@ -21,22 +21,30 @@ namespace Backstreets.Editor.PocketEditor.Model
 
         public static int FindIndex<T>(T[] array, GeometryID id, Func<T, GeometryID> getID)
         {
-            int index = Array.FindIndex(array, item => getID(item) == id);
-            if (index == -1) throw IDNotFound(id);
-            return index;
+            for (var i = 0; i < array.Length; i++)
+            {
+                if (getID(array[i]) == id) return i;
+            }
+
+            throw IDNotFound(id);
         }
 
         public static T FindItem<T>(T[] array, GeometryID id, Func<T, GeometryID> getID)
         {
-            int index = Array.FindIndex(array, item => getID(item) == id);
-            if (index == -1) throw IDNotFound(id);
-            return array[index];
+            foreach (T item in array)
+            {
+                if (getID(item) == id) return item;
+            }
+
+            throw IDNotFound(id);
         }
 
         public static void AssertIDNotUsed<T>(T[] array, GeometryID id, Func<T, GeometryID> getID)
         {
-            int index = Array.FindIndex(array, item => getID(item) == id);
-            if (index != -1) throw IDAlreadyUsed(id);
+            foreach (T item in array)
+            {
+                if (getID(item) == id) throw IDAlreadyUsed(id);
+            }
         }
     }
 }

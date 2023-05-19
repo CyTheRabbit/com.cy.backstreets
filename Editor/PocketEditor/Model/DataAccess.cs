@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿using System;
+using System.Linq;
 using Backstreets.Editor.PocketEditor.View;
 using Backstreets.Pocket;
 
@@ -8,11 +9,13 @@ namespace Backstreets.Editor.PocketEditor.Model
     {
         protected PocketPrefabDetails Pocket;
         protected GeometryModel Model;
+        protected Func<TData, GeometryID> GetIDCached;
 
         protected DataAccess(PocketPrefabDetails pocket, GeometryModel model)
         {
             Pocket = pocket;
             Model = model;
+            GetIDCached = GetID;
         }
 
 
@@ -32,7 +35,7 @@ namespace Backstreets.Editor.PocketEditor.Model
         public virtual TData Get(GeometryID id)
         {
             Validation.AssertGeometryType(id, SupportedType);
-            return Validation.FindItem(GetDataCollection(), id, GetID);
+            return Validation.FindItem(GetDataCollection(), id, GetIDCached);
         }
 
         public virtual GeometryID Create(TData data)
@@ -54,9 +57,9 @@ namespace Backstreets.Editor.PocketEditor.Model
             Validation.AssertGeometryType(id, SupportedType);
             TData[] collection = GetDataCollection();
             GeometryID newID = GetID(data);
-            if (id != newID) Validation.AssertIDNotUsed(collection, newID, GetID);
+            if (id != newID) Validation.AssertIDNotUsed(collection, newID, GetIDCached);
 
-            int index = Validation.FindIndex(collection, id, GetID);
+            int index = Validation.FindIndex(collection, id, GetIDCached);
 
             using (Model.RecordChanges($"Update {newID}"))
             {
