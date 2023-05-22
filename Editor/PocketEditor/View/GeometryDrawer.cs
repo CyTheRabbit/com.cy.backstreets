@@ -56,7 +56,9 @@ namespace Backstreets.Editor.PocketEditor.View
         internal static void DrawCorner(CornerData corner, Color color, float thickness)
         {
             using var drawingScope = new Handles.DrawingScope(color);
-            Handles.DrawWireDisc(math.float3(corner.Position, 0), Vector3.back, CornerRadius, thickness);
+            float3 position = math.float3(corner.Position, 0);
+            float radius = HandleUtility.GetHandleSize(position) * CornerRadius;
+            Handles.DrawWireDisc(position, Vector3.back, radius, thickness);
         }
 
         private void DrawEdges()
@@ -100,6 +102,6 @@ namespace Backstreets.Editor.PocketEditor.View
             NearestGeometry == id ? 2 : 1;
 
 
-        private const float CornerRadius = 0.025f;
+        private const float CornerRadius = 0.05f;
     }
 }

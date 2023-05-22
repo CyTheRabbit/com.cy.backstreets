@@ -133,7 +133,7 @@ namespace Backstreets.Editor.PocketEditor.View
             controlToGeometry.TryGetValue(controlID, out GeometryID geometry) ? geometry : GeometryID.None;
 
 
-        private const float CornerRadius = 0.025f;
+        private const float CornerRadius = 0.05f;
 
 
         private static float DistanceToEdge(EdgeData edge) =>
@@ -146,7 +146,11 @@ namespace Backstreets.Editor.PocketEditor.View
             return HandleUtility.DistanceToRectangle(Vector2.one / 2, Quaternion.identity, 1);
         }
 
-        private static float DistanceToCorner(CornerData corner) =>
-            HandleUtility.DistanceToCircle(math.float3(corner.Position, 0), CornerRadius);
+        private static float DistanceToCorner(CornerData corner)
+        {
+            float3 position = math.float3(corner.Position, 0);
+            float radius = HandleUtility.GetHandleSize(position) * CornerRadius;
+            return HandleUtility.DistanceToCircle(position, radius);
+        }
     }
 }
