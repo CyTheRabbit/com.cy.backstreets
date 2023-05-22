@@ -36,9 +36,17 @@ namespace Backstreets.Editor.PocketEditor
                 new()
                 {
                     Content = new GUIContent("Move"),
-                    Factory = () => new MultiTool(
-                        new MoveTool(model),
-                        new DeformTool(model))
+                    Factory = () =>
+                    {
+                        MoveTool move = new(model);
+                        SplitTool split = new(model);
+                        DragTool drag = new(model);
+                        split.OnSplit += (a, b) => drag.CaptureCorners(a, b);
+                        return new MultiTool(
+                            move,
+                            split,
+                            drag);
+                    }
                 },
                 new()
                 {
