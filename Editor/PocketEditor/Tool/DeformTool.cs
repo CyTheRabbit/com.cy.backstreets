@@ -57,16 +57,19 @@ namespace Backstreets.Editor.PocketEditor.Tool
 
         public void OnViewEvent(Event @event, GeometryID hotGeometry)
         {
-            if (@event is { type: EventType.MouseDown, button: 0 })
+            switch (@event)
             {
-                switch (hotGeometry)
+                case { type: EventType.MouseDown, button: 0 }
+                    when hotGeometry is { Type: GeometryType.Edge }:
                 {
-                    case { Type: GeometryType.Edge }:
-                        PerformSplit(@event, hotGeometry);
-                        break;
-                    case { Type: GeometryType.Corner }:
-                        CaptureCorners(hotGeometry);
-                        break;
+                    PerformSplit(@event, hotGeometry);
+                    break;
+                }
+                case { type: EventType.MouseDown, button: 0 }
+                    when hotGeometry is { Type: GeometryType.Corner }:
+                {
+                    CaptureCorners(hotGeometry);
+                    break;
                 }
             }
         }
