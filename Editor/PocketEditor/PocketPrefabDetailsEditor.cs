@@ -32,7 +32,7 @@ namespace Backstreets.Editor.PocketEditor
                 new() {Content = new GUIContent("Move"), Factory = () => new MoveTool(model)},
                 new() {Content = new GUIContent("Deform"), Factory = () => new DeformTool(model)},
                 new() {Content = new GUIContent("Raw"), Factory = () => null}
-            }, SetTool, 3);
+            }, SetTool, startingIndex: ^1);
         }
 
         private void SetTool(IGeometryTool tool)

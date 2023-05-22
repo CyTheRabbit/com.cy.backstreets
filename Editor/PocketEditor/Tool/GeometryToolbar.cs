@@ -13,12 +13,12 @@ namespace Backstreets.Editor.PocketEditor.Tool
         private int selectedIndex;
 
 
-        public GeometryToolbar(Button[] buttons, Action<IGeometryTool> setter, int startingIndex)
+        public GeometryToolbar(Button[] buttons, Action<IGeometryTool> setter, Index startingIndex)
         {
             contents = buttons.Select(button => button.Content).ToArray();
             factories = buttons.Select(button => button.Factory).ToArray();
             this.setter = setter;
-            selectedIndex = startingIndex;
+            selectedIndex = startingIndex.GetOffset(contents.Length);
         }
 
         public void Process(Event @event)
