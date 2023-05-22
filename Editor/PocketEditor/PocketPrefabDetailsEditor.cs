@@ -28,10 +28,23 @@ namespace Backstreets.Editor.PocketEditor
             activeTool = null;
             toolbar = new GeometryToolbar(new GeometryToolbar.Button[]
             {
-                new() {Content = new GUIContent("Inspect"), Factory = () => new SelectionTool(model)},
-                new() {Content = new GUIContent("Move"), Factory = () => new MoveTool(model)},
-                new() {Content = new GUIContent("Deform"), Factory = () => new DeformTool(model)},
-                new() {Content = new GUIContent("Raw"), Factory = () => null}
+                new()
+                {
+                    Content = new GUIContent("Inspect"),
+                    Factory = () => new SelectionTool(model)
+                },
+                new()
+                {
+                    Content = new GUIContent("Move"),
+                    Factory = () => new MultiTool(
+                        new MoveTool(model),
+                        new DeformTool(model))
+                },
+                new()
+                {
+                    Content = new GUIContent("Raw"),
+                    Factory = () => null
+                }
             }, SetTool, startingIndex: ^1);
         }
 
