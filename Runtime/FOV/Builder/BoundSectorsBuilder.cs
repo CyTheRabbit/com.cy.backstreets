@@ -1,7 +1,6 @@
 using Backstreets.Data;
 using Backstreets.FOV.Geometry;
 using Backstreets.FOV.Jobs;
-using Backstreets.FOV.Utility;
 using Unity.Burst;
 using Unity.Collections;
 using Unity.Jobs;
@@ -60,14 +59,10 @@ namespace Backstreets.FOV.Builder
 
                 if (nearBounds.Length == 0 || farBounds.Length == 0) return;
 
-                float farStartingAngle = Angle(farBounds[0].Right);
-                int nearStartingIndex =
-                    FirstIndexAfterAngle(nearBounds, farStartingAngle) switch { -1 => 0, var i => i };
-
                 SimpleSweep farSweep = new(farBounds);
                 if (!farSweep.MoveNext()) return;
 
-                foreach (Bound nearBound in nearBounds.Offset(nearStartingIndex))
+                foreach (Bound nearBound in nearBounds)
                 {
                     float nearRightAngle = Angle(nearBound.Right);
                     float nearLeftAngle = Angle(nearBound.Left);
@@ -91,16 +86,6 @@ namespace Backstreets.FOV.Builder
             {
                 if (Intersect(near, far) is not { near: var nearCut, far: var farCut }) return;
                 recorder.Record(new BoundSector(nearCut, farCut, pocketID));
-            }
-
-            private int FirstIndexAfterAngle(in NativeArray<Bound> bounds, float angle)
-            {
-                for (int i = 0; i < bounds.Length; i++)
-                {
-                    if (Angle(bounds[i].Left) > angle) return i;
-                }
-
-                return -1;
             }
 
             private static (Bound near, Bound far)? Intersect(Bound near, Bound far)
