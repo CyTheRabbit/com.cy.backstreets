@@ -61,6 +61,8 @@ namespace Backstreets.FOV.Builder.SweepRecorders
 
         private void FlushBound()
         {
+            if (currentBound.EdgeIndex == InvalidEdgeIndex) return;
+
             bounds.Enqueue(currentBound);
         }
 
