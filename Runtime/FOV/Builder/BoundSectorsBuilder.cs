@@ -64,14 +64,17 @@ namespace Backstreets.FOV.Builder
 
                 foreach (Bound nearBound in nearBounds)
                 {
-                    float nearRightAngle = Angle(nearBound.Right);
+                    float nearRightAngle = Angle(nearBound.Right, AnglePreferences.PreferNegative);
                     float nearLeftAngle = Angle(nearBound.Left);
 
                     // Advance til start of near bound
-                    farSweep.AdvanceUntilAngle(nearRightAngle);
+                    while (farSweep.HasMore && Angle(farSweep.Current.Left) <= nearRightAngle)
+                    {
+                        farSweep.MoveNext();
+                    }
                     if (farSweep.IsComplete) break;
 
-                    while (farSweep.HasMore && CompareAngleCyclic(Angle(farSweep.Current.Left), nearLeftAngle) < 0)
+                    while (farSweep.HasMore && Angle(farSweep.Current.Left) < nearLeftAngle)
                     {
                         TryRecord(nearBound, farSweep.Current);
                         farSweep.MoveNext();
@@ -150,7 +153,7 @@ namespace Backstreets.FOV.Builder
 
             public bool AdvanceUntilAngle(float angle)
             {
-                while (HasMore && CompareAngleCyclic(Angle(Current.Left), angle) <= 0) MoveNext();
+                while (HasMore && Angle(Current.Left) <= angle) MoveNext();
                 return HasMore;
             }
         }

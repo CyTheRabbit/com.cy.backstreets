@@ -11,10 +11,15 @@ namespace Backstreets.FOV.Geometry
 
         private static float Determinant(float2 a, float2 b) => a.x * b.y - a.y * b.x;
 
-        internal static float Angle(float2 point)
+        internal static float Angle(float2 point, AnglePreferences preferences = AnglePreferences.PreferPositive)
         {
             float distance = math.length(point);
-            float sign = math.sign(point.y) switch { 0 when point.x < 0 => 1, var rawSign => rawSign };
+            float sign = math.sign(point.y) switch
+            {
+                0 when point.x < 0 && preferences is AnglePreferences.PreferNegative => -1,
+                0 when point.x < 0 => 1,
+                var rawSign => rawSign
+            };
             return distance < math.EPSILON ? 0 : math.degrees(math.acos(point.x / distance)) * sign;
         }
 
@@ -180,6 +185,12 @@ namespace Backstreets.FOV.Geometry
             Straight,
             Right,
             Left,
+        }
+
+        internal enum AnglePreferences
+        {
+            PreferPositive = 0,
+            PreferNegative = 1,
         }
 
         public static float NormalizeAngle(float angle)
