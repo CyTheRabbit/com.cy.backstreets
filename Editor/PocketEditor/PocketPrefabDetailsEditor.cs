@@ -1,57 +1,121 @@
-using Backstreets.Data;
+using Backstreets.Editor.PocketEditor.Model;
+using Backstreets.Editor.PocketEditor.Tool;
+using Backstreets.Editor.PocketEditor.Tool.Move;
 using Backstreets.Pocket;
-using Editor.PocketEditor.CustomHandles;
+using Backstreets.Editor.PocketEditor.View;
 using UnityEditor;
 using UnityEngine;
 
-namespace Editor.PocketEditor
+namespace Backstreets.Editor.PocketEditor
 {
     [CustomEditor(typeof(PocketPrefabDetails))]
-    public class PocketPrefabDetailsEditor : UnityEditor.Editor
+    public class PocketPrefabDetailsEditor : UnityEditor.Editor, IViewController
     {
-        private void OnSceneGUI()
+        private GeometryToolbar toolbar;
+        private PocketGeometryView view;
+        private GeometryModel model;
+        private IGeometryTool activeTool;
+
+        private PocketPrefabDetails Pocket => (PocketPrefabDetails)target;
+        GeometryType IViewController.DrawMask => activeTool?.DrawMask ?? GeometryType.Everything;
+        GeometryType IViewController.PickMask => activeTool?.PickMask ?? GeometryType.None;
+
+
+        private void OnEnable()
         {
-            PocketPrefabDetails pocket = (PocketPrefabDetails)target;
-            for (int i = 0; i < pocket.Portals.Length; i++)
+            view = new PocketGeometryView(Pocket, controller: this);
+            model = new GeometryModel(Pocket, UpdateView);
+            activeTool = null;
+            toolbar = new GeometryToolbar(new GeometryToolbar.Button[]
             {
-                PortalData portal = pocket.Portals[i];
-                if (pocket.FindEdge(portal.edgeID) is not { } portalLine) continue;
-                if (PortalHandle.Clickable(portalLine, HandleColor, 2f))
+                new()
                 {
-                    PortalSelection.Focus(pocket, i);
+                    Content = new GUIContent("Inspect"),
+                    Factory = () => new SelectionTool(model)
+                },
+                new()
+                {
+                    Content = new GUIContent("Move"),
+                    Factory = () =>
+                    {
+                        MoveTool move = new(model);
+                        SplitTool split = new(model);
+                        DragTool drag = new(model);
+                        split.OnSplit += (a, b) => drag.CaptureCorners(a, b);
+                        return new MultiTool(
+                            move,
+                            split,
+                            drag);
+                    }
+                },
+                new()
+                {
+                    Content = new GUIContent("Raw"),
+                    Factory = () => null
                 }
+            }, SetTool, startingIndex: ^1);
+        }
+
+        private void SetTool(IGeometryTool tool)
+        {
+            activeTool?.Dispose();
+            activeTool = tool;
+            UpdateView();
+        }
+
+        public override void OnInspectorGUI()
+        {
+            toolbar.Process(Event.current);
+            if (activeTool != null)
+            {
+                using var box = new GUILayout.VerticalScope(GUI.skin.box, GUILayout.ExpandWidth(true));
+                activeTool.OnInspectorGUI();
+            }
+            else
+            {
+                base.OnInspectorGUI();
             }
         }
+
+        private void OnSceneGUI()
+        {
+            activeTool?.OnBeforeView(Event.current);
+            view.Process(Event.current);
+        }
+
+        private void UpdateView()
+        {
+            Repaint();
+            foreach (SceneView sceneView in SceneView.sceneViews)
+            {
+                sceneView.Repaint();
+            }
+        }
+
+        void IViewController.OnViewEvent(Event @event, GeometryID hotGeometry) =>
+            activeTool?.OnViewEvent(@event, hotGeometry);
 
         [DrawGizmo(GizmoType.NonSelected, typeof(PocketPrefabDetails))]
         public static void DrawGizmo(PocketPrefabDetails pocket, GizmoType gizmoType)
         {
-            foreach (PortalData portal in pocket.Portals)
-            {
-                if (pocket.FindEdge(portal.edgeID) is not { } portalLine) continue;
-                PortalHandle.Static(portalLine, InactiveColor, 1f);
-            }
-
-            DrawEdges(pocket);
-            Handles.DrawSolidRectangleWithOutline(pocket.PocketRect, Color.clear, Color.red);
+            new GeometryDrawer(pocket) { Palette = DesaturatedPalette }.Draw(GeometryType.Everything);
         }
 
         [DrawGizmo(GizmoType.Active | GizmoType.Selected, typeof(PocketPrefabDetails))]
         public static void DrawGizmoActive(PocketPrefabDetails pocket, GizmoType gizmoType)
         {
-            DrawEdges(pocket);
-            Handles.DrawSolidRectangleWithOutline(pocket.PocketRect, Color.clear, Color.red);
+            // Workaround: unless drawer for selected gizmos is specified, non-selected gizmos will not activate after
+            // lose of focus.
         }
 
-        private static readonly Color HandleColor = Color.cyan;
-        private static readonly Color InactiveColor = Color.blue;
+        private static readonly Color LightGrey = Color.Lerp(Color.grey, Color.white, 0.5f);
 
-        private static void DrawEdges(PocketPrefabDetails pocket)
+        private static readonly Palette DesaturatedPalette = new()
         {
-            foreach (EdgeData edge in pocket.Edges)
-            {
-                Handles.DrawLine((Vector2)edge.right, (Vector2)edge.left, 1f);
-            }
-        }
+            EdgeColor = LightGrey,
+            CornerColor = LightGrey,
+            BoundsColor = Color.red,
+            PortalColor = Color.grey,
+        };
     }
 }
