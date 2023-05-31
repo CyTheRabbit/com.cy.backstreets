@@ -34,7 +34,7 @@ namespace Backstreets.Editor.PocketEditor.Tool.Move
             {
                 case { type: EventType.MouseDown, button: 0 } when isNearest:
                 {
-                    Vector2 position = ProjectOntoGeometry(@event.mousePosition);
+                    Vector2 position = @event.GetGeometryPosition();
                     box = new SelectionBox { start = position, end = position, IsDragging = true };
                     GUIUtility.hotControl = controlID;
                     GUI.changed = true;
@@ -43,7 +43,7 @@ namespace Backstreets.Editor.PocketEditor.Tool.Move
                 }
                 case { type: EventType.MouseDrag, button: 0 } when isHot:
                 {
-                    box.end = ProjectOntoGeometry(@event.mousePosition);
+                    box.end = @event.GetGeometryPosition();
                     GUI.changed = true;
                     @event.Use();
                     break;
@@ -69,16 +69,6 @@ namespace Backstreets.Editor.PocketEditor.Tool.Move
             }
 
             return box;
-        }
-
-        private static Vector2 ProjectOntoGeometry(Vector2 guiPoint)
-        {
-            Ray ray = HandleUtility.GUIPointToWorldRay(guiPoint);
-            bool isOnZPlane = ray.origin.z == 0;
-            if (isOnZPlane) return ray.origin;
-
-            float distanceToZPlane = ray.origin.z / ray.direction.z;
-            return ray.GetPoint(distance: distanceToZPlane);
         }
     }
 }

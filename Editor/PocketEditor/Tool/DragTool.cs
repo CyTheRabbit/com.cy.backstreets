@@ -74,7 +74,7 @@ namespace Backstreets.Editor.PocketEditor.Tool
             {
                 case { type: EventType.MouseDrag, button: 0 }:
                 {
-                    Vector2 newPosition = ProjectOntoGeometry(@event.mousePosition);
+                    Vector2 newPosition = @event.GetGeometryPosition();
                     MoveCorners(newPosition);
                     @event.Use();
                     break;
@@ -119,17 +119,6 @@ namespace Backstreets.Editor.PocketEditor.Tool
                     math.float3(edge.right, 0),
                     math.float3(edge.left, 0));
             }
-        }
-
-
-        private static Vector2 ProjectOntoGeometry(Vector2 guiPoint)
-        {
-            Ray ray = HandleUtility.GUIPointToWorldRay(guiPoint);
-            bool isOnZPlane = ray.origin.z == 0;
-            if (isOnZPlane) return ray.origin;
-
-            float distanceToZPlane = ray.origin.z / ray.direction.z;
-            return ray.GetPoint(distance: distanceToZPlane);
         }
     }
 }

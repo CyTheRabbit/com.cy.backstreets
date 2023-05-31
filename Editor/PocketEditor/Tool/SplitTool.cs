@@ -4,7 +4,6 @@ using Backstreets.Editor.PocketEditor.Model;
 using Backstreets.Editor.PocketEditor.View;
 using Backstreets.FOV.Geometry;
 using Unity.Mathematics;
-using UnityEditor;
 using UnityEngine;
 
 namespace Backstreets.Editor.PocketEditor.Tool
@@ -76,7 +75,7 @@ namespace Backstreets.Editor.PocketEditor.Tool
         private static float2? CalculateSplit(EdgeData edge, Event @event)
         {
             Line line = edge.Line;
-            float2 mousePosition = ProjectOntoGeometry(@event.mousePosition);
+            float2 mousePosition = @event.GetGeometryPosition();
 
             float2 toEnd = line.Left - line.Right;
             float2 toMouse = mousePosition - line.Right;
@@ -86,16 +85,6 @@ namespace Backstreets.Editor.PocketEditor.Tool
             return isOnEdge
                 ? math.lerp(line.Right, line.Left, normalizedProjection)
                 : null;
-        }
-
-        private static Vector2 ProjectOntoGeometry(Vector2 guiPoint)
-        {
-            Ray ray = HandleUtility.GUIPointToWorldRay(guiPoint);
-            bool isOnZPlane = ray.origin.z == 0;
-            if (isOnZPlane) return ray.origin;
-
-            float distanceToZPlane = ray.origin.z / ray.direction.z;
-            return ray.GetPoint(distance: distanceToZPlane);
         }
     }
 }
