@@ -35,6 +35,11 @@ namespace Backstreets.Editor.PocketEditor
                 },
                 new()
                 {
+                    Content = new GUIContent("Add"),
+                    Factory = () => new AddGeometryTool(model),
+                },
+                new()
+                {
                     Content = new GUIContent("Move"),
                     Factory = () =>
                     {
