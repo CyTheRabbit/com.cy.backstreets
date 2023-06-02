@@ -9,11 +9,13 @@ namespace Backstreets.Editor.PocketEditor.Model
     internal class CornersAccess
     {
         private readonly PocketPrefabDetails pocket;
+        private readonly GeometryModel model;
 
 
-        public CornersAccess(PocketPrefabDetails pocket)
+        public CornersAccess(PocketPrefabDetails pocket, GeometryModel model)
         {
             this.pocket = pocket;
+            this.model = model;
         }
 
         public IEnumerable<(VertexID ID, float2 Position)> All => pocket.Polygon.EnumerateVerticesWithIDs();
@@ -33,22 +35,17 @@ namespace Backstreets.Editor.PocketEditor.Model
             pocket.Polygon[id] = data;
         }
 
-        public void Delete(VertexID id)
+        public void Delete(VertexID vertex)
         {
-            Assert.IsTrue(pocket.Polygon.IsValidID(id));
+            Assert.IsTrue(pocket.Polygon.IsValidID(vertex));
 
-            Contour contour = pocket.Polygon.contours[id.contourIndex];
-            contour.Vertices.RemoveAt(id.vertexIndex);
+            Contour contour = pocket.Polygon.contours[vertex.contourIndex];
+            contour.Vertices.RemoveAt(vertex.vertexIndex);
 
-            EdgeID updatedEdge = new(id.contourIndex, id.vertexIndex);
-            for (int i = 0; i < pocket.Portals.Count; i++)
-            {
-                PortalData portal = pocket.Portals[i];
-                if (!IsAffectedByIndexUpdate(portal.edgeID, updatedEdge)) continue;
-
-                portal.edgeID.edgeIndex--;
-                pocket.Portals[i] = portal;
-            }
+            model.RemapEdgeIDs(id =>
+                id.contourIndex == vertex.contourIndex && id.edgeIndex >= vertex.vertexIndex
+                    ? new EdgeID(id.contourIndex, id.edgeIndex - 1)
+                    : id);
         }
 
         public VertexID Insert(EdgeID splitEdge, float2 position)
@@ -61,20 +58,12 @@ namespace Backstreets.Editor.PocketEditor.Model
                 contour.Vertices.Insert(insertIndex, position);
             }
 
-            for (int i = 0; i < pocket.Portals.Count; i++)
-            {
-                PortalData portal = pocket.Portals[i];
-                if (!IsAffectedByIndexUpdate(portal.edgeID, splitEdge)) continue;
-
-                portal.edgeID.edgeIndex++;
-                pocket.Portals[i] = portal;
-            }
+            model.RemapEdgeIDs(id =>
+                id.contourIndex == contourIndex && id.edgeIndex >= insertIndex
+                    ? new EdgeID(id.contourIndex, id.edgeIndex + 1)
+                    : id);
 
             return new VertexID(contourIndex, insertIndex);
         }
-
-        private static bool IsAffectedByIndexUpdate(EdgeID edge, EdgeID updated) =>
-            edge.contourIndex == updated.contourIndex &&
-            edge.edgeIndex >= updated.edgeIndex;
     }
 }
