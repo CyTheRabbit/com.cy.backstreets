@@ -9,7 +9,7 @@ namespace Backstreets.FOV.Geometry
 
         private const float Epsilon = 0.0001f;
 
-        private static float Determinant(float2 a, float2 b) => a.x * b.y - a.y * b.x;
+        public static float Determinant(float2 a, float2 b) => a.x * b.y - a.y * b.x;
 
         internal static float Angle(float2 point, AnglePreferences preferences = AnglePreferences.PreferPositive)
         {
