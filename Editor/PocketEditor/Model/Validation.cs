@@ -19,24 +19,9 @@ namespace Backstreets.Editor.PocketEditor.Model
             }
         }
 
-        public static int FindIndex<T>(T[] array, GeometryID id, Func<T, GeometryID> getID)
+        public static void AssertValidIndex(int index, GeometryID id)
         {
-            for (var i = 0; i < array.Length; i++)
-            {
-                if (getID(array[i]) == id) return i;
-            }
-
-            throw IDNotFound(id);
-        }
-
-        public static T FindItem<T>(T[] array, GeometryID id, Func<T, GeometryID> getID)
-        {
-            foreach (T item in array)
-            {
-                if (getID(item) == id) return item;
-            }
-
-            throw IDNotFound(id);
+            if (index == -1) throw IDNotFound(id);
         }
 
         public static void AssertIDNotUsed<T>(T[] array, GeometryID id, Func<T, GeometryID> getID)

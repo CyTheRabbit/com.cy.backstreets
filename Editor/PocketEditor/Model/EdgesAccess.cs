@@ -1,31 +1,28 @@
-﻿using System.Linq;
-using Backstreets.Data;
-using Backstreets.Editor.PocketEditor.View;
+﻿using Backstreets.Data;
+using Backstreets.FOV.Geometry;
 using Backstreets.Pocket;
 
 namespace Backstreets.Editor.PocketEditor.Model
 {
-    internal class EdgesAccess : DataAccess<EdgeData>
+    internal class EdgesAccess
     {
-        public EdgesAccess(PocketPrefabDetails pocket, GeometryModel model) : base(pocket, model)
+        private readonly PocketPrefabDetails pocket;
+
+        public EdgesAccess(PocketPrefabDetails pocket)
         {
+            this.pocket = pocket;
         }
 
-        protected override GeometryType SupportedType => GeometryType.Edge;
-
-        protected override EdgeData[] GetDataCollection() => Pocket.Edges;
-
-        protected override void SetDataCollection(EdgeData[] collection) => Pocket.Edges = collection;
-
-        protected override GeometryID GetID(EdgeData data) => GeometryID.Of(data);
-
-        protected override void AssignID(GeometryID id, ref EdgeData data) => data.id = id.ID;
-
-        protected override GeometryID GetNewID()
+        public Line this[EdgeID id]
         {
-            int maxID = Pocket.Edges.Max(edge => edge.id);
-            int newID = maxID + 1;
-            return new GeometryID(GeometryType.Edge, newID);
+            get => Get(id);
+            set => Update(id, value);
         }
+
+        public Line Get(EdgeID id) => pocket.Polygon[id];
+
+        public void Update(EdgeID id, Line data) => pocket.Polygon[id] = data;
+
+        public bool Exists(EdgeID id) => pocket.Polygon.IsValidID(id);
     }
 }

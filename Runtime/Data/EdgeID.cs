@@ -21,5 +21,12 @@ namespace Backstreets.Data
         public override bool Equals(object obj) => obj is EdgeID other && Equals(other);
 
         public override int GetHashCode() => HashCode.Combine(contourIndex, edgeIndex);
+
+        public static bool operator ==(EdgeID x, EdgeID y) => x.Equals(y);
+
+        public static bool operator !=(EdgeID x, EdgeID y) => !x.Equals(y);
+
+
+        public static readonly EdgeID None = new(contourIndex: -1, edgeIndex: -1);
     }
 }

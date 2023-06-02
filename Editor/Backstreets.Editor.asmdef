@@ -1,6 +1,6 @@
 {
   "name": "Backstreets.Editor",
-  "rootNamespace": "Backstreets.Editor",
+  "rootNamespace": "Backstreets",
   "references": [
     "Backstreets",
     "Unity.RenderPipelines.Core.Runtime",

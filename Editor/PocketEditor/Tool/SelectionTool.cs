@@ -2,6 +2,8 @@
 using Backstreets.Data;
 using Backstreets.Editor.PocketEditor.Model;
 using Backstreets.Editor.PocketEditor.View;
+using Backstreets.FOV.Geometry;
+using Unity.Mathematics;
 using UnityEditor;
 using UnityEngine;
 
@@ -63,14 +65,15 @@ namespace Backstreets.Editor.PocketEditor.Tool
 
         private void DrawCornerInspector()
         {
-            CornerData cornerData = model.Corners.Get(inspectedGeometry);
+            float2 corner = model.Corners.Get(inspectedGeometry);
 
             using EditorGUI.ChangeCheckScope check = new();
-            cornerData.Position = EditorGUILayout.Vector2Field("Position", cornerData.Position);
+            corner = EditorGUILayout.Vector2Field("Position", corner);
 
             if (check.changed)
             {
-                model.Corners.Update(cornerData);
+                using RecordChangesScope changes = model.RecordChanges("Update corner");
+                model.Corners.Update(inspectedGeometry, corner);
             }
         }
 
@@ -80,35 +83,30 @@ namespace Backstreets.Editor.PocketEditor.Tool
 
         private void DrawPortalInspector()
         {
-            PortalData portalData = model.Portals.Get(inspectedGeometry);
+            PortalData portalData = model.Portals[inspectedGeometry];
             using EditorGUI.ChangeCheckScope check = new();
             GUILayout.Label($"Portal {portalData.edgeID}");
-            portalData.edgeID = EditorGUILayout.IntField("Edge ID", portalData.edgeID);
             portalData.exitID = EditorGUILayout.IntField("Exit ID", portalData.exitID);
 
             if (check.changed)
             {
-                inspectedGeometry = model.Portals.Update(inspectedGeometry, portalData);
+                using RecordChangesScope changes = model.RecordChanges("Update portal");
+                model.Portals.Update(inspectedGeometry, portalData);
             }
         }
 
         private void DrawEdgeInspector()
         {
-            EdgeData edgeData = model.Edges.Get(inspectedGeometry);
+            Line edge = model.Edges.Get(inspectedGeometry);
 
             using EditorGUI.ChangeCheckScope check = new();
-            edgeData.id = EditorGUILayout.IntField("Edge ID", edgeData.id);
-            edgeData.right = EditorGUILayout.Vector2Field("Right", edgeData.right);
-            edgeData.left = EditorGUILayout.Vector2Field("Left", edgeData.left);
-
-            if (GUILayout.Button("Swap corners"))
-            {
-                (edgeData.right, edgeData.left) = (edgeData.left, edgeData.right);
-            }
+            edge.Right = EditorGUILayout.Vector2Field("Right", edge.Right);
+            edge.Left = EditorGUILayout.Vector2Field("Left", edge.Left);
 
             if (check.changed)
             {
-                inspectedGeometry = model.Edges.Update(inspectedGeometry, edgeData);
+                using RecordChangesScope changes = model.RecordChanges("Update edge");
+                model.Edges.Update(inspectedGeometry, edge);
             }
         }
     }

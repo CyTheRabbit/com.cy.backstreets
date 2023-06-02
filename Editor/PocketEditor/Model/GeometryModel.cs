@@ -16,9 +16,9 @@ namespace Backstreets.Editor.PocketEditor.Model
         {
             this.pocket = pocket;
             this.updateViewAction = updateViewAction;
-            Edges = new EdgesAccess(pocket, model: this);
-            Portals = new PortalsAccess(pocket, model: this);
-            Corners = new CornersAccess(pocket, model: this);
+            Edges = new EdgesAccess(pocket);
+            Portals = new PortalsAccess(pocket);
+            Corners = new CornersAccess(pocket);
         }
 
         public void UpdateView() => updateViewAction();

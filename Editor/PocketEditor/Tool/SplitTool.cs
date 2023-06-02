@@ -11,7 +11,7 @@ namespace Backstreets.Editor.PocketEditor.Tool
 {
     internal class SplitTool : IGeometryTool
     {
-        public event Action<CornerData, CornerData> OnSplit;
+        public event Action<VertexID> OnSplit;
 
 
         private readonly GeometryModel model;
@@ -58,33 +58,31 @@ namespace Backstreets.Editor.PocketEditor.Tool
 
         private void PerformSplit(Event @event, GeometryID hotGeometry)
         {
-            EdgeData edge = model.Edges.Get(hotGeometry);
+            Line edge = model.Edges.Get(hotGeometry);
             if (CalculateSplit(edge, @event) is not { } split) return;
 
-            EdgeData rightCut = new() { id = edge.id, right = edge.right, left = split };
-            EdgeData leftCut = new() { id = default, right = split, left = edge.left };
+            VertexID newVertex;
 
-            model.Edges.Update(hotGeometry, rightCut);
-            model.Edges.Create(ref leftCut);
+            using (model.RecordChanges("Split edge"))
+            {
+                newVertex = model.Corners.Insert(splitEdge: hotGeometry, split);
+            }
 
-            OnSplit?.Invoke(
-                new CornerData(rightCut, CornerData.Endpoint.Left),
-                new CornerData(leftCut, CornerData.Endpoint.Right));
+            OnSplit?.Invoke(newVertex);
         }
 
 
-        private static float2? CalculateSplit(EdgeData edge, Event @event)
+        private static float2? CalculateSplit(Line edge, Event @event)
         {
-            Line line = edge.Line;
             float2 mousePosition = ProjectOntoGeometry(@event.mousePosition);
 
-            float2 toEnd = line.Left - line.Right;
-            float2 toMouse = mousePosition - line.Right;
+            float2 toEnd = edge.Left - edge.Right;
+            float2 toMouse = mousePosition - edge.Right;
             float projectedLengthSq = math.dot(toMouse, toEnd);
             float normalizedProjection = math.saturate(projectedLengthSq / math.lengthsq(toEnd));
             bool isOnEdge = normalizedProjection is > 0 and < 1;
             return isOnEdge
-                ? math.lerp(line.Right, line.Left, normalizedProjection)
+                ? math.lerp(edge.Right, edge.Left, normalizedProjection)
                 : null;
         }
 

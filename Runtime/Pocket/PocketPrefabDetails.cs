@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using Backstreets.Data;
 using Backstreets.FOV.Geometry;
@@ -12,9 +13,9 @@ namespace Backstreets.Pocket
     {
         [SerializeField] private int pocketID;
         [SerializeField] private Color debugColor;
-        [SerializeField] private EdgeData[] edges = Array.Empty<EdgeData>();
-        [SerializeField] private PortalData[] portals = Array.Empty<PortalData>();
-        [SerializeField] private Bounds pocketBounds = default;
+        [SerializeField] private Polygon polygon;
+        [SerializeField] private List<PortalData> portals = new();
+        [SerializeField] private Bounds pocketBounds;
 
         private PocketGeometry? runtimeGeometry;
 
@@ -24,27 +25,20 @@ namespace Backstreets.Pocket
 
         public Color DebugColor => debugColor;
 
-        public PortalData[] Portals
+        public Polygon Polygon
+        {
+            get => polygon ??= new Polygon();
+            set => polygon = value;
+        }
+
+        public List<PortalData> Portals
         {
             get => portals;
             set => portals = value;
         }
 
-        public Bounds PocketBounds => pocketBounds;
-
         public Rect PocketRect => new(pocketBounds.min, pocketBounds.size);
 
-        public EdgeData[] Edges
-        {
-            get => edges;
-            set => edges = value;
-        }
-
-        public Line? FindEdge(int id)
-        {
-            int index = Array.FindIndex(edges, edge => edge.id == id);
-            return index == -1 ? null : edges[index].Line;
-        }
 
         public void OnValidate()
         {
@@ -63,17 +57,25 @@ namespace Backstreets.Pocket
         private PocketGeometry MakeRuntimeGeometry(Allocator allocator)
         {
             PocketID id = new(pocketID);
-            PocketGeometry geometry = new(id, edges.Length, portals.Length, allocator);
-            using NativeParallelHashMap<int, int> edgeIdToIndex = new(edges.Length, Allocator.Temp);
-
-            for (int i = 0; i < edges.Length; i++)
+            if (polygon is null)
             {
-                EdgeData edgeData = edges[i];
-                edgeIdToIndex.Add(edgeData.id, i);
-                geometry.Edges[i] = edgeData.Line;
+                return PocketGeometry.Nothing(id);
             }
 
-            for (int i = 0; i < portals.Length; i++)
+            int edgeCount = polygon.EdgeCount;
+            PocketGeometry geometry = new(id, edgeCount, portals.Count, allocator);
+            using NativeParallelHashMap<EdgeID, int> edgeIdToIndex = new(edgeCount, Allocator.Temp);
+
+            {
+                int index = 0;
+                foreach ((EdgeID edgeID, Line edge) in polygon.EnumerateEdgesWithIDs())
+                {
+                    edgeIdToIndex.Add(edgeID, index);
+                    geometry.Edges[index++] = edge;
+                }
+            }
+
+            for (int i = 0; i < portals.Count; i++)
             {
                 PortalData portalData = portals[i];
                 int edgeIndex = edgeIdToIndex[portalData.edgeID];

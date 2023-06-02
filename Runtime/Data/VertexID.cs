@@ -22,5 +22,8 @@ namespace Backstreets.Data
         public override bool Equals(object obj) => obj is VertexID other && Equals(other);
 
         public override int GetHashCode() => HashCode.Combine(contourIndex, vertexIndex);
+
+
+        public static readonly VertexID None = new(contourIndex: -1, vertexIndex: -1);
     }
 }

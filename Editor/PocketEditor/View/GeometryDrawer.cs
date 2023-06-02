@@ -1,6 +1,6 @@
 ﻿using Backstreets.Data;
 using Backstreets.Editor.PocketEditor.CustomHandles;
-using Backstreets.Editor.PocketEditor.Model;
+using Backstreets.FOV.Geometry;
 using Backstreets.Pocket;
 using Unity.Mathematics;
 using UnityEditor;
@@ -38,39 +38,37 @@ namespace Backstreets.Editor.PocketEditor.View
 
         private void DrawCorners()
         {
-            foreach (EdgeData edge in pocket.Edges)
+            foreach (VertexID vertexReference in pocket.Polygon.EnumerateVertexIDs())
             {
-                DrawCorner(new CornerData(edge, CornerData.Endpoint.Right));
-                DrawCorner(new CornerData(edge, CornerData.Endpoint.Left));
+                DrawCorner(vertexReference);
             }
         }
 
-        private void DrawCorner(CornerData corner)
+        private void DrawCorner(VertexID vertex)
         {
-            GeometryID id = GeometryID.Of(corner);
-            if (NearestGeometry != id) return;
+            if (NearestGeometry != vertex) return;
 
-            DrawCorner(corner, GetColor(id), GetThickness(id));
+            float2 position = pocket.Polygon[vertex];
+            DrawCorner(position, GetColor(vertex), GetThickness(vertex));
         }
 
-        internal static void DrawCorner(CornerData corner, Color color, float thickness)
+        internal static void DrawCorner(float2 position, Color color, float thickness)
         {
             using var drawingScope = new Handles.DrawingScope(color);
-            float3 position = math.float3(corner.Position, 0);
-            float radius = HandleUtility.GetHandleSize(position) * CornerRadius;
-            Handles.DrawWireDisc(position, Vector3.back, radius, thickness);
+            float3 position3D = math.float3(position, 0);
+            float radius = HandleUtility.GetHandleSize(position3D) * CornerRadius;
+            Handles.DrawWireDisc(position3D, Vector3.back, radius, thickness);
         }
 
         private void DrawEdges()
         {
-            foreach (EdgeData edge in pocket.Edges)
+            foreach ((EdgeID id, Line edge) in pocket.Polygon.EnumerateEdgesWithIDs())
             {
-                GeometryID id = GeometryID.Of(edge);
                 Color color = GetColor(id);
                 float thickness = GetThickness(id);
 
                 using var drawingScope = new Handles.DrawingScope(color);
-                Handles.DrawLine((Vector2)edge.right, (Vector2)edge.left, thickness);
+                Handles.DrawLine((Vector2)edge.Right, (Vector2)edge.Left, thickness);
             }
         }
 
@@ -78,11 +76,10 @@ namespace Backstreets.Editor.PocketEditor.View
         {
             foreach (PortalData portal in pocket.Portals)
             {
-                if (pocket.FindEdge(portal.edgeID) is not { } portalLine) continue;
+                if (!pocket.Polygon.TryGet(portal.edgeID, out Line portalLine)) continue;
 
-                GeometryID id = GeometryID.Of(portal);
-                Color color = GetColor(id);
-                float thickness = GetThickness(id);
+                Color color = GetColor(portal);
+                float thickness = GetThickness(portal);
                 PortalHandle.Static(portalLine, color, thickness);
             }
         }

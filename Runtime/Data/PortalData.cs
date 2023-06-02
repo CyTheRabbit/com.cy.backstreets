@@ -5,7 +5,7 @@ namespace Backstreets.Data
     [Serializable]
     public struct PortalData
     {
-        public int edgeID;
+        public EdgeID edgeID;
         public int exitID;
     }
 }

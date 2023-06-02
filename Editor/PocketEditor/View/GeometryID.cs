@@ -17,12 +17,6 @@ namespace Backstreets.Editor.PocketEditor.View
             Extra = extra;
         }
 
-        public static GeometryID Of(EdgeData edge) => new(GeometryType.Edge, edge.id);
-
-        public static GeometryID Of(PortalData portal) => new(GeometryType.Portal, portal.edgeID);
-
-        internal static GeometryID Of(CornerData corner) => new(GeometryType.Corner, corner.EdgeID, (int)corner.End);
-
         public static GeometryID OfBounds() => new(GeometryType.Bounds, -1);
 
         public static readonly GeometryID None = new(GeometryType.None, -1);
@@ -39,6 +33,31 @@ namespace Backstreets.Editor.PocketEditor.View
         public static bool operator ==(GeometryID a, GeometryID b) => a.Equals(b);
 
         public static bool operator !=(GeometryID a, GeometryID b) => !a.Equals(b);
+
+        #endregion
+
+        #region Cast
+
+        public static implicit operator GeometryID(EdgeID edgeID) =>
+            new(GeometryType.Edge, edgeID.contourIndex, edgeID.edgeIndex);
+
+        public static implicit operator EdgeID(GeometryID id)
+        {
+            Validation.AssertGeometryType(id, GeometryType.Edge);
+            return new EdgeID(contourIndex: id.ID, edgeIndex: id.Extra);
+        }
+
+        public static implicit operator GeometryID(VertexID vertexID) =>
+            new(GeometryType.Corner, vertexID.contourIndex, vertexID.vertexIndex);
+
+        public static implicit operator VertexID(GeometryID id)
+        {
+            Validation.AssertGeometryType(id, GeometryType.Corner);
+            return new VertexID(contourIndex: id.ID, vertexIndex: id.Extra);
+        }
+
+        public static implicit operator GeometryID(PortalData portal) =>
+            new(GeometryType.Portal, portal.edgeID.contourIndex, portal.edgeID.edgeIndex);
 
         #endregion
     }

@@ -12,13 +12,13 @@ namespace Backstreets.Editor.PocketEditor.Tool
     internal class DragTool : IGeometryTool
     {
         private readonly GeometryModel model;
-        private CornerData[] dragCorners;
+        private VertexID[] dragCorners;
         private int controlID;
 
         public DragTool(GeometryModel model)
         {
             this.model = model;
-            dragCorners = Array.Empty<CornerData>();
+            dragCorners = Array.Empty<VertexID>();
         }
 
 
@@ -45,7 +45,7 @@ namespace Backstreets.Editor.PocketEditor.Tool
                 case { type: EventType.MouseDown, button: 0 }
                     when hotGeometry is { Type: GeometryType.Corner }:
                 {
-                    float2 position = model.Corners.Get(hotGeometry).Position;
+                    float2 position = model.Corners.Get(hotGeometry);
                     CaptureCornersAtPosition(position);
                     break;
                 }
@@ -61,7 +61,7 @@ namespace Backstreets.Editor.PocketEditor.Tool
             GUILayout.Label("Drag corners to move");
         }
 
-        public void CaptureCorners(params CornerData[] corners)
+        public void CaptureCorners(params VertexID[] corners)
         {
             dragCorners = corners;
             GUIUtility.hotControl = controlID;
@@ -81,12 +81,7 @@ namespace Backstreets.Editor.PocketEditor.Tool
                 }
                 case { type: EventType.MouseUp, button: 0 }:
                 {
-                    dragCorners = Array.Empty<CornerData>();
-                    break;
-                }
-                case { type: EventType.Repaint }:
-                {
-                    HighlightDragGeometry();
+                    dragCorners = Array.Empty<VertexID>();
                     break;
                 }
             }
@@ -94,32 +89,18 @@ namespace Backstreets.Editor.PocketEditor.Tool
 
         private void MoveCorners(Vector2 position)
         {
-            for (var i = 0; i < dragCorners.Length; i++)
+            using RecordChangesScope changes = model.RecordChanges("Move corners");
+            foreach (VertexID id in dragCorners)
             {
-                dragCorners[i].Position = position;
+                model.Corners.Update(id, position);
             }
-
-            model.Corners.UpdateBatch(dragCorners);
         }
 
         private void CaptureCornersAtPosition(float2 position) =>
             CaptureCorners(model.Corners.All
                 .Where(corner => corner.Position.Equals(position))
+                .Select(corner => corner.ID)
                 .ToArray());
-
-        private void HighlightDragGeometry()
-        {
-            foreach (CornerData corner in dragCorners)
-            {
-                GeometryID edgeID = new(GeometryType.Edge, corner.EdgeID);
-                EdgeData edge = model.Edges.Get(edgeID);
-
-                using var drawingScope = new Handles.DrawingScope(Color.cyan);
-                Handles.DrawLine(
-                    math.float3(edge.right, 0),
-                    math.float3(edge.left, 0));
-            }
-        }
 
 
         private static Vector2 ProjectOntoGeometry(Vector2 guiPoint)

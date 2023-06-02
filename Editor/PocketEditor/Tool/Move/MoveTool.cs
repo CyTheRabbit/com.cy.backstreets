@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using Backstreets.Data;
 using Backstreets.Editor.PocketEditor.Model;
 using Backstreets.Editor.PocketEditor.View;
 using Unity.Mathematics;
@@ -12,7 +13,7 @@ namespace Backstreets.Editor.PocketEditor.Tool.Move
     {
         private readonly GeometryModel model;
         private SelectionBox selectionBox;
-        private CornerData[] selectedCorners;
+        private VertexID[] selectedCorners;
         private Vector2 preciseMoveInput;
 
 
@@ -20,7 +21,7 @@ namespace Backstreets.Editor.PocketEditor.Tool.Move
         {
             this.model = model;
             selectionBox = default;
-            selectedCorners = Array.Empty<CornerData>();
+            selectedCorners = Array.Empty<VertexID>();
             preciseMoveInput = Vector2.zero;
         }
 
@@ -55,8 +56,9 @@ namespace Backstreets.Editor.PocketEditor.Tool.Move
 
         private void DrawSelectedCorners()
         {
-            foreach (CornerData corner in selectedCorners)
+            foreach (VertexID cornerID in selectedCorners)
             {
+                float2 corner = model.Corners.Get(cornerID);
                 GeometryDrawer.DrawCorner(corner, Color.yellow, thickness: 2f);
             }
         }
@@ -65,9 +67,10 @@ namespace Backstreets.Editor.PocketEditor.Tool.Move
         {
             if (preciseMoveInput == default) return;
 
-            foreach (CornerData corner in selectedCorners)
+            foreach (VertexID cornerID in selectedCorners)
             {
-                GeometryDrawer.DrawCorner(corner.Offset(preciseMoveInput), Color.white, thickness: 0.5f);
+                float2 corner = model.Corners.Get(cornerID);
+                GeometryDrawer.DrawCorner(corner + (float2)preciseMoveInput, Color.white, thickness: 0.5f);
             }
         }
 
@@ -130,22 +133,28 @@ namespace Backstreets.Editor.PocketEditor.Tool.Move
         private void CaptureSelectedCorners()
         {
             Rect rect = selectionBox.WorldRect;
-            selectedCorners = model.Corners.All.Where(corner => rect.Contains(corner.Position)).ToArray();
+            selectedCorners = model.Corners.All
+                .Where(corner => rect.Contains(corner.Position))
+                .Select(corner => corner.ID)
+                .ToArray();
             model.UpdateView();
         }
 
         private void MoveSelectedCorners(Vector2 offset)
         {
-            for (var i = 0; i < selectedCorners.Length; i++)
+            using RecordChangesScope changes = model.RecordChanges("Move corners");
+            foreach (VertexID id in selectedCorners)
             {
-                selectedCorners[i].Position += (float2)offset;
+                float2 position = model.Corners.Get(id);
+                float2 newPosition = position + (float2)offset;
+                model.Corners.Update(id, newPosition);
             }
-
-            model.Corners.UpdateBatch(selectedCorners);
         }
 
         private Vector2 GetSelectionCenter() =>
-            selectedCorners.Aggregate(Vector2.zero, (sum, corner) => sum + (Vector2)corner.Position) /
+            selectedCorners
+                .Select(id => model.Corners.Get(id))
+                .Aggregate(float2.zero, (sum, corner) => sum + corner) /
             selectedCorners.Length;
     }
 }

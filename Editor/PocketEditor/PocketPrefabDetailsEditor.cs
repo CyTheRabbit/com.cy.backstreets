@@ -41,7 +41,7 @@ namespace Backstreets.Editor.PocketEditor
                         MoveTool move = new(model);
                         SplitTool split = new(model);
                         DragTool drag = new(model);
-                        split.OnSplit += (a, b) => drag.CaptureCorners(a, b);
+                        split.OnSplit += vertex => drag.CaptureCorners(vertex);
                         return new MultiTool(
                             move,
                             split,

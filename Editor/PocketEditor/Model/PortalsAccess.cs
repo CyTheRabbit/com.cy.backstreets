@@ -1,26 +1,63 @@
 ﻿using System;
+using System.Collections.Generic;
 using Backstreets.Data;
 using Backstreets.Editor.PocketEditor.View;
 using Backstreets.Pocket;
 
 namespace Backstreets.Editor.PocketEditor.Model
 {
-    internal class PortalsAccess : DataAccess<PortalData>
+    internal class PortalsAccess
     {
-        public PortalsAccess(PocketPrefabDetails pocket, GeometryModel model) : base(pocket, model)
+        private readonly PocketPrefabDetails pocket;
+
+
+        public PortalsAccess(PocketPrefabDetails pocket)
         {
+            this.pocket = pocket;
         }
 
-        protected override GeometryType SupportedType => GeometryType.Portal;
 
-        protected override PortalData[] GetDataCollection() => Pocket.Portals;
+        protected List<PortalData> Portals => pocket.Portals;
 
-        protected override void SetDataCollection(PortalData[] collection) => Pocket.Portals = collection;
+        public PortalData this[GeometryID id]
+        {
+            get => Get(id);
+            set => Update(id, value);
+        }
 
-        protected override GeometryID GetID(PortalData data) => GeometryID.Of(data);
 
-        protected override void AssignID(GeometryID id, ref PortalData data) => data.edgeID = id.ID;
+        public PortalData Get(GeometryID id) => Portals.Find(Match(id));
 
-        protected override GeometryID GetNewID() => throw new NotSupportedException();
+        public void Update(GeometryID id, PortalData data)
+        {
+            int portalIndex = Portals.FindIndex(Match(id));
+            Validation.AssertValidIndex(portalIndex, id);
+
+            Portals[portalIndex] = data;
+        }
+
+        public void Delete(GeometryID id)
+        {
+            int portalIndex = Portals.FindIndex(Match(id));
+            Validation.AssertValidIndex(portalIndex, id);
+
+            Portals.RemoveAt(portalIndex);
+        }
+
+        public GeometryID Create(PortalData data)
+        {
+            GeometryID id = data;
+            bool idAlreadyUsed = Portals.Exists(Match(data.edgeID));
+            if (idAlreadyUsed) throw Validation.IDAlreadyUsed(id);
+
+            Portals.Add(data);
+            return id;
+        }
+
+        public bool Exists(GeometryID id) => Portals.Exists(Match(id));
+
+
+        private static Predicate<PortalData> Match(EdgeID edgeID) =>
+            data => data.edgeID == edgeID;
     }
 }

@@ -1,84 +1,80 @@
 ﻿using System.Collections.Generic;
-using System.Linq;
 using Backstreets.Data;
-using Backstreets.Editor.PocketEditor.View;
 using Backstreets.Pocket;
+using Unity.Mathematics;
+using UnityEngine.Assertions;
 
 namespace Backstreets.Editor.PocketEditor.Model
 {
     internal class CornersAccess
     {
         private readonly PocketPrefabDetails pocket;
-        private readonly GeometryModel model;
 
 
-        public CornersAccess(PocketPrefabDetails pocket, GeometryModel model)
+        public CornersAccess(PocketPrefabDetails pocket)
         {
             this.pocket = pocket;
-            this.model = model;
         }
 
-        public IEnumerable<CornerData> All => RightCorners.Concat(LeftCorners);
+        public IEnumerable<(VertexID ID, float2 Position)> All => pocket.Polygon.EnumerateVerticesWithIDs();
 
-        public IEnumerable<CornerData> RightCorners =>
-            pocket.Edges.Select(edge => new CornerData(edge, CornerData.Endpoint.Right));
-
-        public IEnumerable<CornerData> LeftCorners =>
-            pocket.Edges.Select(edge => new CornerData(edge, CornerData.Endpoint.Left));
+        public IEnumerable<VertexID> AllIDs => pocket.Polygon.EnumerateVertexIDs();
 
 
-        public CornerData Get(GeometryID id)
+        public float2 Get(VertexID id)
         {
-            Validation.AssertGeometryType(id, GeometryType.Corner);
-            GeometryID edgeID = new(GeometryType.Edge, id.ID);
-            EdgeData edge = Validation.FindItem(pocket.Edges, edgeID, GeometryID.Of);
-
-            return new CornerData(edge, (CornerData.Endpoint)id.Extra);
+            Assert.IsTrue(pocket.Polygon.IsValidID(id));
+            return pocket.Polygon[id];
         }
 
-        public void Update(CornerData corner)
+        public void Update(VertexID id, float2 data)
         {
-            GeometryID edgeID = new(GeometryType.Edge, corner.EdgeID);
-            int edgeIndex = Validation.FindIndex(pocket.Edges, edgeID, GeometryID.Of);
+            Assert.IsTrue(pocket.Polygon.IsValidID(id));
+            pocket.Polygon[id] = data;
+        }
 
-            using (model.RecordChanges($"Update {corner}"))
+        public void Delete(VertexID id)
+        {
+            Assert.IsTrue(pocket.Polygon.IsValidID(id));
+
+            Contour contour = pocket.Polygon.contours[id.contourIndex];
+            contour.Vertices.RemoveAt(id.vertexIndex);
+
+            EdgeID updatedEdge = new(id.contourIndex, id.vertexIndex);
+            for (int i = 0; i < pocket.Portals.Count; i++)
             {
-                switch (corner.End)
-                {
-                    case CornerData.Endpoint.Right:
-                        pocket.Edges[edgeIndex].right = corner.Position;
-                        break;
-                    case CornerData.Endpoint.Left:
-                        pocket.Edges[edgeIndex].left = corner.Position;
-                        break;
-                }
+                PortalData portal = pocket.Portals[i];
+                if (!IsAffectedByIndexUpdate(portal.edgeID, updatedEdge)) continue;
+
+                portal.edgeID.edgeIndex--;
+                pocket.Portals[i] = portal;
             }
         }
 
-        public void UpdateBatch(CornerData[] corners)
+        public VertexID Insert(EdgeID splitEdge, float2 position)
         {
-            int[] edgeIndices = corners
-                .Select(corner => Validation.FindIndex(pocket.Edges, new GeometryID(GeometryType.Edge, corner.EdgeID), GeometryID.Of))
-                .ToArray(); // Precompute indices to validate them before applying changes
+            int contourIndex = splitEdge.contourIndex;
+            int insertIndex = splitEdge.edgeIndex + 1;
 
-            using (model.RecordChanges($"Update corners ({corners.Length})"))
             {
-                for (int i = 0; i < corners.Length; i++)
-                {
-                    CornerData corner = corners[i];
-                    int edgeIndex = edgeIndices[i];
-
-                    switch (corner.End)
-                    {
-                        case CornerData.Endpoint.Right:
-                            pocket.Edges[edgeIndex].right = corner.Position;
-                            break;
-                        case CornerData.Endpoint.Left:
-                            pocket.Edges[edgeIndex].left = corner.Position;
-                            break;
-                    }
-                }
+                Contour contour = pocket.Polygon.contours[contourIndex];
+                contour.Vertices.Insert(insertIndex, position);
             }
+
+            for (int i = 0; i < pocket.Portals.Count; i++)
+            {
+                PortalData portal = pocket.Portals[i];
+                if (!IsAffectedByIndexUpdate(portal.edgeID, splitEdge)) continue;
+
+                portal.edgeID.edgeIndex++;
+                pocket.Portals[i] = portal;
+            }
+
+            return new VertexID(contourIndex, insertIndex);
         }
+
+        private static bool IsAffectedByIndexUpdate(EdgeID edge, EdgeID updated) =>
+            edge.contourIndex == updated.contourIndex &&
+            edge.edgeIndex >= updated.edgeIndex;
     }
 }
