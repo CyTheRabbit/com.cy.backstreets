@@ -83,7 +83,7 @@ namespace Backstreets.Data
 
             public Line Current => edges[index];
 
-            public bool MoveNext() => ++index >= edges.Count;
+            public bool MoveNext() => ++index < edges.Count;
         }
     }
 }
