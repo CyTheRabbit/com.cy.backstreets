@@ -11,7 +11,6 @@ namespace Backstreets.FOV.MeshBuilder
         public FieldOfView FieldOfView;
         public Mesh Mesh;
         public Dictionary<VertexAttribute, AttributeType> Mappings;
-        public PocketID? Filter;
 
         public NativeParallelHashMap<PocketID, Color>? DebugPalette;
 

@@ -1,8 +1,6 @@
 using System;
 using System.Collections.Generic;
-using Backstreets.FOV.Geometry;
 using Backstreets.FOV.MeshBuilder.Handlers;
-using Backstreets.FOV.Utility;
 using Unity.Collections;
 using UnityEngine;
 using UnityEngine.Profiling;
@@ -33,9 +31,7 @@ namespace Backstreets.FOV.MeshBuilder
         private FOVMeshBuilder(BuildRequest request)
         {
             ref FieldOfView fov = ref request.FieldOfView;
-            NativeArray<BoundSector> sectors = request.Filter is { } filter
-                ? fov.GetBoundSectorsByPocket(filter, Allocator.TempJob)
-                : fov.GetAllBoundSectors(Allocator.TempJob);
+            OrderedBoundSectors sectors = new(ref fov, Allocator.TempJob);
             meshDataArray = Mesh.AllocateWritableMeshData(meshCount: 1);
             meshData = meshDataArray[0];
 
@@ -75,14 +71,29 @@ namespace Backstreets.FOV.MeshBuilder
 
         private void InitSubMeshes()
         {
-            meshData.subMeshCount = 1;
+            int pocketsCount = context.OrderedSectors.PocketIDs.Length;
+            meshData.subMeshCount = 1 + pocketsCount;
             meshData.SetSubMesh(0, new SubMeshDescriptor(indexStart: 0, context.IndexCount));
+
+            for (int i = 0; i < pocketsCount; i++)
+            {
+                const int indicesPerSector = 6;
+                const int verticesPerSector = 4;
+                IndexRange sectorsRange = context.OrderedSectors.Ranges[i];
+                meshData.SetSubMesh(i + 1, new SubMeshDescriptor
+                {
+                    indexStart = sectorsRange.Start * indicesPerSector,
+                    indexCount = sectorsRange.Length * indicesPerSector,
+                    firstVertex = sectorsRange.Start * verticesPerSector,
+                    vertexCount = sectorsRange.Length * verticesPerSector,
+                });
+            }
         }
 
         private void Complete()
         {
             Mesh.ApplyAndDisposeWritableMeshData(meshDataArray, context.Request.Mesh);
-            context.Sectors.Dispose();
+            context.OrderedSectors.Dispose();
         }
 
 
