@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using Backstreets.FOV.Geometry;
 using Backstreets.FOV.MeshBuilder.Handlers;
+using Backstreets.FOV.Utility;
 using Unity.Collections;
 using UnityEngine;
 using UnityEngine.Profiling;
@@ -32,7 +33,9 @@ namespace Backstreets.FOV.MeshBuilder
         private FOVMeshBuilder(BuildRequest request)
         {
             ref FieldOfView fov = ref request.FieldOfView;
-            NativeArray<BoundSector> sectors = fov.GetAllBoundSectors(Allocator.TempJob);
+            NativeArray<BoundSector> sectors = request.Filter is { } filter
+                ? fov.GetBoundSectorsByPocket(filter, Allocator.TempJob)
+                : fov.GetAllBoundSectors(Allocator.TempJob);
             meshDataArray = Mesh.AllocateWritableMeshData(meshCount: 1);
             meshData = meshDataArray[0];
 
