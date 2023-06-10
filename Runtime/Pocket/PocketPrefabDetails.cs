@@ -3,8 +3,8 @@ using System.Linq;
 using Backstreets.Data;
 using Backstreets.FOV.Geometry;
 using Unity.Collections;
+using Unity.Mathematics;
 using UnityEngine;
-using UnityEngine.Tilemaps;
 
 namespace Backstreets.Pocket
 {
@@ -14,7 +14,7 @@ namespace Backstreets.Pocket
         [SerializeField] private Color debugColor;
         [SerializeField] private EdgeData[] edges = Array.Empty<EdgeData>();
         [SerializeField] private PortalData[] portals = Array.Empty<PortalData>();
-        [SerializeField] private Bounds pocketBounds = default;
+        [SerializeField] private Rect pocketBounds;
 
         private PocketGeometry? runtimeGeometry;
 
@@ -30,9 +30,7 @@ namespace Backstreets.Pocket
             set => portals = value;
         }
 
-        public Bounds PocketBounds => pocketBounds;
-
-        public Rect PocketRect => new(pocketBounds.min, pocketBounds.size);
+        public Rect PocketRect => pocketBounds;
 
         public EdgeData[] Edges
         {
@@ -85,48 +83,28 @@ namespace Backstreets.Pocket
             return geometry;
         }
 
-        private Bounds CalculatePocketBounds()
+        private Rect CalculatePocketBounds()
         {
-            Tilemap[] tilemaps = GetComponentsInChildren<Tilemap>();
-            if (!tilemaps.Any()) return default;
+            return edges is { Length: > 0 }
+                ? edges.Aggregate(seed: GetAABB(edges[0]), EncapsulateEdge)
+                : Rect.zero;
 
-            Bounds cumulativeBounds = GetCompressedBounds(tilemaps.First());
-            foreach (Tilemap tilemap in tilemaps.Skip(1))
-            {
-                cumulativeBounds.Encapsulate(GetCompressedBounds(tilemap));
-            }
+            static Rect EncapsulateEdge(Rect rect, EdgeData edge) =>
+                EncapsulatePoint(EncapsulatePoint(rect, edge.right), edge.left);
 
-            return tilemaps
-                .Select(GetCompressedBounds)
-                .Aggregate(
-                    seed: (Bounds?) null,
-                    func: (accumulator, current) =>
-                    {
-                        if (accumulator is not { } previous) return current;
-                        previous.Encapsulate(current);
-                        return previous;
-                    },
-                    resultSelector: accumulator => accumulator ?? new Bounds());
+            static Rect EncapsulatePoint(Rect rect, float2 point) =>
+                Rect.MinMaxRect(
+                    xmin: math.min(rect.xMin, point.x),
+                    ymin: math.min(rect.yMin, point.y),
+                    xmax: math.max(rect.xMax, point.x),
+                    ymax: math.max(rect.yMax, point.y));
 
-            static Bounds GetCompressedBounds(Tilemap tilemap)
-            {
-                tilemap.CompressBounds();
-                Bounds localBounds = tilemap.localBounds;
-                Matrix4x4 localToWorld = tilemap.transform.localToWorldMatrix;
-                Bounds worldBounds = new(localToWorld.MultiplyPoint3x4(localBounds.center), Vector3.zero);
-                for (int x = 0; x < 2; x++)
-                for (int y = 0; y < 2; y++)
-                for (int z = 0; z < 2; z++)
-                {
-                    Vector3 corner = new(
-                        x == 0 ? localBounds.min.x : localBounds.max.x,
-                        y == 0 ? localBounds.min.y : localBounds.max.y,
-                        z == 0 ? localBounds.min.z : localBounds.max.z);
-                    worldBounds.Encapsulate(localToWorld.MultiplyPoint3x4(corner));
-                }
-
-                return worldBounds;
-            }
+            static Rect GetAABB(EdgeData edge) =>
+                Rect.MinMaxRect(
+                    xmin: math.min(edge.right.x, edge.left.x),
+                    ymin: math.min(edge.right.y, edge.left.y),
+                    xmax: math.max(edge.right.x, edge.left.x),
+                    ymax: math.max(edge.right.x, edge.left.x));
         }
     }
 }
