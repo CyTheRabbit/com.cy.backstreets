@@ -9,7 +9,7 @@ namespace Backstreets.FOV.MeshBuilder
     public struct BuildRequest
     {
         public FieldOfView FieldOfView;
-        public Mesh Mesh;
+        public FOVMesh Output;
         public Dictionary<VertexAttribute, AttributeType> Mappings;
 
         public NativeParallelHashMap<PocketID, Color>? DebugPalette;

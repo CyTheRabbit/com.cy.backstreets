@@ -13,5 +13,8 @@ namespace Backstreets.Data
         public override int GetHashCode() => ID;
         public static bool operator ==(PocketID x, PocketID y) => x.Equals(y);
         public static bool operator !=(PocketID x, PocketID y) => !x.Equals(y);
+
+
+        public static readonly PocketID Invalid = new(-1);
     }
 }

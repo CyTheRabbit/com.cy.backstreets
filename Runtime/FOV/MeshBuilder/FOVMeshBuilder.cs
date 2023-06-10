@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Backstreets.Data;
 using Backstreets.FOV.MeshBuilder.Handlers;
 using Unity.Collections;
 using UnityEngine;
@@ -72,6 +73,8 @@ namespace Backstreets.FOV.MeshBuilder
         private void InitSubMeshes()
         {
             int pocketsCount = context.OrderedSectors.PocketIDs.Length;
+            OrderedBoundSectors sectors = context.OrderedSectors;
+
             meshData.subMeshCount = 1 + pocketsCount;
             meshData.SetSubMesh(0, new SubMeshDescriptor(indexStart: 0, context.IndexCount));
 
@@ -79,7 +82,7 @@ namespace Backstreets.FOV.MeshBuilder
             {
                 const int indicesPerSector = 6;
                 const int verticesPerSector = 4;
-                IndexRange sectorsRange = context.OrderedSectors.Ranges[i];
+                IndexRange sectorsRange = sectors.Ranges[i];
                 meshData.SetSubMesh(i + 1, new SubMeshDescriptor
                 {
                     indexStart = sectorsRange.Start * indicesPerSector,
@@ -92,8 +95,24 @@ namespace Backstreets.FOV.MeshBuilder
 
         private void Complete()
         {
-            Mesh.ApplyAndDisposeWritableMeshData(meshDataArray, context.Request.Mesh);
+            WriteSubMeshIdentifiers();
+            Mesh.ApplyAndDisposeWritableMeshData(meshDataArray, context.Request.Output.Mesh);
             context.OrderedSectors.Dispose();
+        }
+
+        private void WriteSubMeshIdentifiers()
+        {
+            int pocketsCount = context.OrderedSectors.PocketIDs.Length;
+            OrderedBoundSectors sectors = context.OrderedSectors;
+            NativeList<PocketID> subMeshIdentifiers = context.Request.Output.SubMeshIdentifiers;
+
+            subMeshIdentifiers.Length = 1 + pocketsCount;
+            subMeshIdentifiers[0] = PocketID.Invalid;
+
+            for (int i = 0; i < pocketsCount; i++)
+            {
+                subMeshIdentifiers[i + 1] = sectors.PocketIDs[i];
+            }
         }
 
 

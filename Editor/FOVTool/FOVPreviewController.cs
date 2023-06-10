@@ -15,7 +15,7 @@ namespace Backstreets.Editor.FOVTool
 {
     public class FOVPreviewController : IDisposable
     {
-        private readonly Mesh fovMesh;
+        private readonly FOVMesh fovMesh;
         private readonly SceneGeometrySource geometrySource;
         private readonly FieldOfViewBuilder fovBuilder;
         private readonly PocketID pocket;
@@ -25,8 +25,7 @@ namespace Backstreets.Editor.FOVTool
 
         public FOVPreviewController(Vector3 position, PocketID pocketID, Scene scene, FOVPreviewTool tool)
         {
-            fovMesh = new Mesh();
-            fovMesh.MarkDynamic();
+            fovMesh = new FOVMesh();
             geometrySource = new SceneGeometrySource(scene);
             fovBuilder = new FieldOfViewBuilder(geometrySource);
             anchor = new AnchorHandle(position, tool.AnchorIcon);
@@ -35,7 +34,7 @@ namespace Backstreets.Editor.FOVTool
 
             buildRequestTemplate = new BuildRequest
             {
-                Mesh = fovMesh,
+                Output = fovMesh,
                 Mappings = new Dictionary<VertexAttribute, BuildRequest.AttributeType>
                 {
                     [VertexAttribute.Position] = BuildRequest.AttributeType.WorldPosition,
@@ -65,7 +64,7 @@ namespace Backstreets.Editor.FOVTool
         public void Dispose()
         {
             geometrySource?.Dispose();
-            UnityEngine.Object.DestroyImmediate(fovMesh);
+            fovMesh?.Dispose();
         }
 
         private bool UpdateHandles() => anchor.Update();
@@ -90,7 +89,7 @@ namespace Backstreets.Editor.FOVTool
             CommandBuffer cmd = CommandBufferPool.Get("Visibility Preview");
             cmd.SetGlobalColor("_HandleColor", color);
             cmd.SetGlobalFloat("_HandleSize", 1);
-            cmd.DrawMesh(fovMesh, Gizmos.matrix, HandleUtility.handleMaterial, 0, 0);
+            cmd.DrawMesh(fovMesh.Mesh, Gizmos.matrix, HandleUtility.handleMaterial, 0, 0);
             Graphics.ExecuteCommandBuffer(cmd);
             CommandBufferPool.Release(cmd);
         }
